@@ -45,7 +45,7 @@ public class Util {
 
             Position pos = ((AstMethod) method).getSourcePosition(i);
             if (pos != null) {
-                String[] result = pos.getURL().getFile().split("/");
+                String[] result = pos.getURL().getFile().split(File.separator);
                 return result[result.length - 1];
             }
         }

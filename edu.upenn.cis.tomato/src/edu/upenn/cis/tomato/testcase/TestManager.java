@@ -68,11 +68,11 @@ public class TestManager extends JSCallGraphBuilderUtil{
 	public static void TestFunctionInvocation() throws ClassHierarchyException, IllegalArgumentException, IOException, CancelException {
 
 		// Mashup URL
-		String mashupURL = "file://"+(new File("").getAbsolutePath())+"/dat/test/function/BasicFunctionInvocation.html";
+		String mashupURL = "file://"+(new File("").getAbsolutePath())+"/dat/test/function/BasicFunctionInvocation.html".replaceAll("/", File.separator);
 		URL url = new URL(mashupURL); 
 		
 		// Parse Mashup Location
-		String[] urlPattern = mashupURL.split("/");
+		String[] urlPattern = mashupURL.split(File.separator);
 		String MashupPageName = "L" + urlPattern[urlPattern.length-1];
 		
 		// Initialize Policy
