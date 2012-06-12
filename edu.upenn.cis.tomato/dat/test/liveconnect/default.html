@@ -1,0 +1,43 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>LiveConnect - For Chrome/Firefox Browser</title>
+</head>
+<script type="text/javascript" src="script.js"></script>
+
+<body>
+
+<p>LiveConnect - For Chrome/Firefox Browser</p>
+
+<p>Task 1 - Using JavaScript to invoke functions defined in JavaApplet to update the text of JavaApplet.</p>
+
+<form>
+<p>This is the JavaApplet.</p>
+<object type="application/x-java-applet;version=1.4.1" width= "180" height= "180"  name="jsap1" id="jsap1">
+<param name="archive" value="jsapplet.jar"> 
+<param name="code" value="com.raditha.articles.JSHelloWorld2"> 
+<param name="mayscript" value="yes"> 
+<param name="scriptable" value="true"> 
+<param name="name" value="jsapplet">
+</object>
+
+<p>This is the TextArea controlled by JS.</p>
+<textarea style='width:180px; height:150px' name='txt1'>Type something here. Hit the button below.</textarea>
+<p>Hit the button to submit text.</p>
+<input type=button value='Update Applet Text' onClick='updateApplet()'>
+</form> 
+
+<p>Task 2 - Using JavaApplet to invoke JavaScript funtions, which will modify the text of the TextArea above.</p>
+<object type="application/x-java-applet;version=1.4.1" width= "180" height= "180"  name="jsap2" id="jsap2">
+<param name="archive" value="jsapplet.jar"> 
+<param name="code" value="com.raditha.articles.JSHelloWorld3"> 
+<param name="mayscript" value="yes"> 
+<param name="scriptable" value="true"> 
+<param name="name" value="jsapplet">
+</object>
+
+</body>
+
+</html>
+
+

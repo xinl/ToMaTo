@@ -1,0 +1,127 @@
+<HTML>
+<TITLE>Mashup Testing Example - Information Flow</TITLE>
+
+Mashup Testing Example - Information Flow
+
+<body>
+
+<script language="javascript" type="text/javascript" src="./extScript.js">
+alert("none")
+</script>
+
+<script type="text/javascript">
+
+function test1()
+{
+	var f ;
+	f = 1414 ;
+	
+	var g;
+	g = 1732 ;
+	g = g + f;
+	
+	alert(g);
+	
+	if(f > 0)
+	{
+		g = 31415 ;
+	}
+	else
+	{
+		f = -926 ;
+	}
+	
+	if(g > 0)
+	{
+		alert(g) ;
+	}
+}
+
+function test2()
+{
+	var f  = "abc";
+	var g = "efg";
+	g = g + f;
+	
+	alert(g);
+	
+	if(f > 0)
+	{
+		g = "31415" ;
+	}
+	else
+	{
+		f =  "926" ;
+	}
+	
+	if(g > 0)
+	{
+		alert(g) ;
+	}
+}
+
+function test3()
+{
+	var g = new Array();
+	
+	f.x = "b"
+	g[0] = 456 ;
+	g[0] = f.x + g[0];
+	
+	if(f.x > 0)
+	{
+		g[0] = "31415" ;
+	}
+	else
+	{
+		f.x =  "1414" ;
+	}
+	
+	if(g[0] > 0)
+	{
+		alert(g) ;
+	}
+}
+
+function outer() {
+	
+  var z;
+
+  function inner1() 
+  {
+  	var y = 1;
+  	z = 1; 
+  	z = z + y;
+  	
+  	var p = new Object();
+  	p.a = 1;
+  	p.b = p.a + 1;
+  	
+  	inner2();
+  	z = addFuntion(y);
+  }
+  
+  inner1();
+}
+
+function myFunction()
+{ 
+  f = 3;
+}
+
+// var f = 1;
+// var g = 2;
+// var f = addFuntion(f,g);
+// myFunction();
+
+//   test1();
+//   test2();
+//   test3();
+
+outer();
+inner1();
+
+</script>
+
+</body>
+</HTML>

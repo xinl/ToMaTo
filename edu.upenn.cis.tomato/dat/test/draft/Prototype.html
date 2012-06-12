@@ -1,0 +1,24 @@
+<HTML>
+<TITLE>Mashup Testing Example - JS Prototype</TITLE>
+
+Mashup Testing Example - JS Prototype
+
+<script language="javascript" type="text/javascript">
+
+function human()
+{
+  this.msg = alert("This is Human");
+}
+
+function man()
+{}
+
+Peter = new human();
+man.prototype = Peter;
+
+Tom = new man();
+Tom.msg;
+
+</script>
+
+</HTML>

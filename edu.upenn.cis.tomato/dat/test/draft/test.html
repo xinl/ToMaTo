@@ -1,0 +1,63 @@
+<HTML>
+<TITLE>encodeURI Sanitation</TITLE>
+
+Hello!
+
+<SCRIPT>
+function nowayyoucanhavethesamename(args)
+{
+  
+  var loc = window.location;
+  loc = "http://example.com/";
+  
+  var myCars=new Array();
+  var myTruck;
+  if(args>0)
+  {
+    myTruck = myCars;
+  }
+  else
+  {
+    myTruck = new Array();
+  }
+  myTruck[0]="Saab";
+
+}
+</SCRIPT>
+
+<SCRIPT>
+nowayyoucanhavethesamename(1);
+dataflowtestfunction();
+</SCRIPT>
+
+<SCRIPT>
+
+function human()
+{
+  this.a = nowayyoucanhavethesamename;
+}
+
+function man()
+{}
+
+Peter = new human();
+man.prototype = Peter;
+
+Tom = new man();
+Tom.a();
+
+</SCRIPT>
+
+<SCRIPT>
+function dataflowtestfunction()
+{
+  var staticVariable = "1";
+  staticVariable = "2";
+  staticVariable = "3";
+  staticVariable = "4";
+  var result = staticVariable + staticVariable;
+  alert(result);
+}
+</SCRIPT>
+
+</HTML>

@@ -1,0 +1,60 @@
+<HTML>
+<TITLE>Mashup Testing Example - Dynamic Feature</TITLE>
+
+Mashup Testing Example - Dynamic Feature
+
+<body>
+
+<script language="javascript" type="text/javascript">
+
+	function testArray()
+	{
+		var d_array = new Array();
+		d_array[1] = 3;
+		d_array[2] = d_array[1] + 1;
+		alert(d_array[2]);
+	}
+
+	function testArrayError()
+	{
+		var d_array = new Array();
+		d_array[2] = d_array[1] + 3;
+		alert(d_array[2]);
+	}
+	
+	function testWith()
+	{
+		var a = new Object();
+		a.m1 = 5;
+		
+		with(a)
+		{
+			m1=1;
+		}
+		alert(a.m1);
+	}
+	
+	function testReflection()
+	{
+		var a = "alert();"
+		eval(a);		
+	}
+	
+	function testFunction()
+	{
+		alert(this);
+	}
+	
+	// testArray();
+	// testArrayError();
+	// testWith();
+	// testReflection();
+	
+	var a = "abc" ;
+	testFunction.call(a)
+	
+	
+</script>
+
+</body>
+</HTML>

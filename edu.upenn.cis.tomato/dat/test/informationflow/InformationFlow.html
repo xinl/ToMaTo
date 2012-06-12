@@ -1,0 +1,20 @@
+<HTML>
+<script language="javascript" type="text/javascript" src="./ExternalScript.js"></script>
+<script type="text/javascript">
+
+function compute()
+{ 
+	var f = 2;
+	f = f + 3;
+	f = changeVariableInternal(f);
+	f = changeVariableExternal(f);
+}
+
+function changeVariableInternal(f)
+{ 
+	return f+1;
+}
+
+compute();
+</script>
+</HTML>
