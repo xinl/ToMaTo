@@ -36,8 +36,7 @@ public class FunctionInvocation {
             String className = method.getClass().getName().toString();
             String nodeName = method.getDeclaringClass().getName().toString();
 
-            // Assume that all the functions for which we define policy are
-            // within the mashup page.
+            // Assume that all the functions for which we define policy are within the mashup page.
             if (className.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject") && nodeName.startsWith(pageNamePattern)) {
                 // Get the origin of the CG node in question
                 IR ir = node.getIR();

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.ibm.wala.cast.ir.ssa.AstIRFactory;
 import com.ibm.wala.cast.js.html.DefaultSourceExtractor;
 import com.ibm.wala.cast.js.html.IdentityUrlResolver;
 import com.ibm.wala.cast.js.html.JSSourceExtractor;
@@ -16,7 +17,8 @@ import com.ibm.wala.cast.js.html.jericho.JerichoHtmlParser;
 import com.ibm.wala.cast.js.ipa.callgraph.JSCFABuilder;
 
 import com.ibm.wala.cast.js.loader.JavaScriptLoader;
-import com.ibm.wala.cast.js.test.Util;
+import com.ibm.wala.cast.js.test.JSCallGraphBuilderUtil;
+import com.ibm.wala.cast.js.test.JSCallGraphBuilderUtil.CGBuilderType;
 import com.ibm.wala.cast.js.translator.CAstRhinoTranslatorFactory;
 import com.ibm.wala.cast.loader.AstMethod;
 import com.ibm.wala.cast.tree.impl.LineNumberPosition;
@@ -47,10 +49,10 @@ public class ObjectMemberInvocation {
 		List<String> targetNames = Arrays.asList(interestedFunctions);
 		
 		// Invoke WALA for analysis
-		Util.setTranslatorFactory(new CAstRhinoTranslatorFactory());
+		//JSCallGraphBuilderUtil.setTranslatorFactory(new CAstRhinoTranslatorFactory());
 		JavaScriptLoader.addBootstrapFile(WebUtil.preamble);
 		SourceModule[] sources = getSources(url);
-		JSCFABuilder builder = com.ibm.wala.cast.js.test.Util.makeCGBuilder(new WebPageLoaderFactory(com.ibm.wala.cast.js.ipa.callgraph.Util.getTranslatorFactory()), sources, true);
+		JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(new WebPageLoaderFactory(new CAstRhinoTranslatorFactory(), null), sources, CGBuilderType.ZERO_ONE_CFA, AstIRFactory.makeDefaultFactory());
 		CallGraph cg = builder.makeCallGraph(builder.getOptions());
 		
 		DebugUtil.DEBUG_PrintSeperationLine();

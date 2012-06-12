@@ -19,12 +19,9 @@ import java.util.Map.Entry;
 import com.ibm.wala.cast.ir.ssa.AstIsDefinedInstruction;
 import com.ibm.wala.cast.ir.ssa.AstLexicalAccess.Access;
 import com.ibm.wala.cast.ir.ssa.EachElementGetInstruction;
-import com.ibm.wala.cast.js.ipa.callgraph.JavaScriptConstructTargetSelector.JavaScriptConstructor;
 import com.ibm.wala.cast.js.ssa.JavaScriptInvoke;
 import com.ibm.wala.cast.js.ssa.JavaScriptPropertyRead;
 import com.ibm.wala.cast.js.ssa.JavaScriptPropertyWrite;
-import com.ibm.wala.cast.loader.AstMethod;
-import com.ibm.wala.cast.tree.CAstSourcePositionMap.Position;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.graph.AbstractMeetOperator;
 import com.ibm.wala.dataflow.graph.BitVectorFramework;
@@ -58,6 +55,7 @@ import com.ibm.wala.util.intset.BitVector;
 import com.ibm.wala.util.intset.IntIterator;
 import com.ibm.wala.util.intset.OrdinalSetMapping;
 
+import edu.upenn.cis.tomato.data.BitVectorIntersection;
 import edu.upenn.cis.tomato.policy.PolicyChecker;
 import edu.upenn.cis.tomato.util.DebugUtil;
 
@@ -241,9 +239,12 @@ public class ContextInsensitiveInformationFlow {
 					if(initialize_DEBUG_Output)
 					{
 						AstIsDefinedInstruction instruction = (AstIsDefinedInstruction) instructions[i];
-						if(instruction.fieldRef != null)
+						if(instruction.getFieldRef() != null)
 						{
-							System.out.println(instruction.fieldVal + " " + instruction.fieldRef.getName() + " " + instruction.lval + " " + instruction.rval);
+							// getUse(1) returns AstIsDefinedInstruction.fieldVal
+							// getUse(0) returns rval
+							// getDef() returns lval
+							System.out.println(instruction.getUse(1) + " " + instruction.getFieldRef().getName() + " " + instruction.getDef() + " " + instruction.getUse(0));
 						}
 					}
 				}
@@ -424,7 +425,8 @@ public class ContextInsensitiveInformationFlow {
 									
 					if(initialize_DEBUG_Output)
 					{
-						System.out.println(instruction.result + " " + instruction.getDeclaredField().getName());
+						//getDef() returns result field
+						System.out.println(instruction.getDef() + " " + instruction.getDeclaredField().getName());
 						
 						System.out.print("Use [ " );
 						for(int j=0; j<instructions[i].getNumberOfUses(); j++)
@@ -618,62 +620,64 @@ public class ContextInsensitiveInformationFlow {
 						}
 						
 						System.out.print("Parameters [ ");
-						
-						for(int j=0; j<instruction.params.length; j++)
+						// start with 1 because the first Use is function name
+						for(int j=1; j<instruction.getNumberOfParameters(); j++)
 						{
-							System.out.print(instruction.params[j] + " ");
+							System.out.print(instruction.getUse(j) + " ");
 						}
 						
 						System.out.println("]");
 					}
 
-					Access[] ac = instruction.lexicalReads;
-					if(ac !=null)
-					{
-						for (int j = 0; j < ac.length; j++) 
+//					Access[] ac = instruction.lexicalReads;
+//					if(ac !=null)
+//					{
+						for (int j = 0; j < instruction.getNumberOfLexicalReads(); j++) 
 						{
+							Access ac = instruction.getLexicalUse(j);
 							if(initialize_DEBUG_Output)
 							{
-								System.out.println("Lexical Read " + j +"-th lexical variable [" + ac[j].valueNumber + " , " + ac[j].variableName +"@"+ ac[j].variableDefiner + "]");
+								System.out.println("Lexical Read " + j +"-th lexical variable [" + ac.valueNumber + " , " + ac.variableName +"@"+ ac.variableDefiner + "]");
 							}
 							
 							String vn = "";
-							if(ac[j].variableDefiner == null)
+							if(ac.variableDefiner == null)
 							{
-								vn = ac[j].variableName+"@"+nodeName;
+								vn = ac.variableName+"@"+nodeName;
 							}
 							else
 							{
-								vn = ac[j].variableName+"@"+ac[j].variableDefiner;
+								vn = ac.variableName+"@"+ac.variableDefiner;
 							}
 							
-							ToMaTo.VariableNameMapping.get(nodeName).put(ac[j].valueNumber, vn);
+							ToMaTo.VariableNameMapping.get(nodeName).put(ac.valueNumber, vn);
 						}
-					}
+//					}
 
-					ac = instruction.lexicalWrites;
-					if(ac !=null)
-					{
-						for (int j = 0; j < ac.length; j++) 
+//					ac = instruction.lexicalWrites;
+//					if(ac !=null)
+//					{
+						for (int j = 0; j < instruction.getNumberOfLexicalWrites(); j++) 
 						{
+							Access ac = instruction.getLexicalDef(j);
 							if(initialize_DEBUG_Output)
 							{
-								System.out.println("Lexical Write " + j +"-th lexical variable [" + ac[j].valueNumber + " , " + ac[j].variableName +"@"+ ac[j].variableDefiner + "]");
+								System.out.println("Lexical Write " + j +"-th lexical variable [" + ac.valueNumber + " , " + ac.variableName +"@"+ ac.variableDefiner + "]");
 							}
 							
 							String vn = "";
-							if(ac[j].variableDefiner == null)
+							if(ac.variableDefiner == null)
 							{
-								vn = ac[j].variableName+"@"+nodeName;
+								vn = ac.variableName+"@"+nodeName;
 							}
 							else
 							{
-								vn = ac[j].variableName+"@"+ac[j].variableDefiner;
+								vn = ac.variableName+"@"+ac.variableDefiner;
 							}
 							
-							ToMaTo.VariableNameMapping.get(nodeName).put(ac[j].valueNumber, vn);
+							ToMaTo.VariableNameMapping.get(nodeName).put(ac.valueNumber, vn);
 						}
-					}
+//					}
 					
 					String[] ln = ir.getLocalNames(i, instruction.getFunction());
 					if(ln!=null)
