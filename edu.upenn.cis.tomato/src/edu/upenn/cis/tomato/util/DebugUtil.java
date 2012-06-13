@@ -154,7 +154,7 @@ public class DebugUtil {
 	
 	public static void DEBUG_InformationFLow_PrintVariableNameMap() {
 		
-		Iterator<Entry<String, TreeMap<Integer, String>>> iter = ToMaTo.VariableNameMapping.entrySet().iterator();
+		Iterator<Entry<String, TreeMap<Integer, String>>> iter = ToMaTo.variableNameMapping.entrySet().iterator();
 		while (iter.hasNext()) 
 		{
 			Entry<String, TreeMap<Integer, String>> e = iter.next();
@@ -186,9 +186,9 @@ public class DebugUtil {
 				e_vn = iter_vn.next();
 				int object_vn = (Integer) e_vn.getKey();
 				
-				if(ToMaTo.VariableNameMapping.get(methodName).get(object_vn)!=null)
+				if(ToMaTo.variableNameMapping.get(methodName).get(object_vn)!=null)
 				{
-					System.out.print(ToMaTo.VariableNameMapping.get(methodName).get(object_vn) + " has fields [ ");
+					System.out.print(ToMaTo.variableNameMapping.get(methodName).get(object_vn) + " has fields [ ");
 				}
 				else
 				{

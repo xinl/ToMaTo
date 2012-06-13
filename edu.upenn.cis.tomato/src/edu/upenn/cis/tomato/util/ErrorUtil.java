@@ -2,11 +2,11 @@ package edu.upenn.cis.tomato.util;
 
 public class ErrorUtil {
 	
-	public static final String ErrorPrompt = "[ToMaTo System Error]";
+	public static final String ERROR_PROMPT = "[ToMaTo System Error]";
 	
-	public static void ErrorMessage(String msg)
+	public static void printErrorMessage(String msg)
 	{
-		System.err.println(ErrorPrompt + " " + msg);
+		System.err.println(ERROR_PROMPT + " " + msg);
 	}
 
 }

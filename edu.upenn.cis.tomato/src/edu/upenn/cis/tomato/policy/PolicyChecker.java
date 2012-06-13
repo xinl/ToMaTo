@@ -9,10 +9,10 @@ import edu.upenn.cis.tomato.application.ToMaTo;
 
 public class PolicyChecker {
 	
-	public static final String SystemVariableKey = "System Variables";
-	public static final String GlobalVariableKey = "Global Variables";
+	public static final String SYSTEM_VARIABLE_KEY = "System Variables";
+	public static final String GLOBAL_VARIABLE_KEY = "Global Variables";
 	
-	public static boolean IsFunctionInvocationAllowed(String library, String function)
+	public static boolean isFunctionInvocationAllowed(String library, String function)
 	{
 		LibraryPolicy lp = PolicyMaker.policyCollection.get(library);
 		if(lp == null)
@@ -75,7 +75,7 @@ public class PolicyChecker {
 		
 	}
 	
-	public static TreeMap<String, TreeSet<String>> FetchVariableOfInterestSet ()
+	public static TreeMap<String, TreeSet<String>> fetchVariableOfInterestSet ()
 	{
 		TreeMap<String, TreeSet<String>> Result = new TreeMap<String, TreeSet<String>>();
 		Iterator<Entry<String, LibraryPolicy>> iter_pc = PolicyMaker.policyCollection.entrySet().iterator();
@@ -99,22 +99,22 @@ public class PolicyChecker {
 							 if(ToMaTo.systemBuiltinVariables.containsKey(ParsedRule[0]))
 							 {
 								 String systemVariable = ToMaTo.systemBuiltinVariables.get(ParsedRule[0]);
-								 TreeSet<String> SystemVariables = Result.get(SystemVariableKey);
+								 TreeSet<String> SystemVariables = Result.get(SYSTEM_VARIABLE_KEY);
 								 if(SystemVariables == null)
 								 {
 									 SystemVariables = new TreeSet<String>();
-									 Result.put(SystemVariableKey, SystemVariables);
+									 Result.put(SYSTEM_VARIABLE_KEY, SystemVariables);
 								 }
 								 
 								 SystemVariables.add(systemVariable);
 							 }
 							 else
 							 {
-								 TreeSet<String> GlobalVariables = Result.get(GlobalVariableKey);
+								 TreeSet<String> GlobalVariables = Result.get(GLOBAL_VARIABLE_KEY);
 								 if(GlobalVariables == null)
 								 {
 									 GlobalVariables = new TreeSet<String>();
-									 Result.put(GlobalVariableKey, GlobalVariables);
+									 Result.put(GLOBAL_VARIABLE_KEY, GlobalVariables);
 								 }
 								 
 								 GlobalVariables.add(ParsedRule[0]);
@@ -139,7 +139,7 @@ public class PolicyChecker {
 		return Result;
 	}
 	
-	public static TreeSet<String> FetchExternalLibraryIDs()
+	public static TreeSet<String> fetchExternalLibraryIDs()
 	{
 		TreeSet<String> result = new TreeSet<String>();
 		Iterator<Entry<String, LibraryPolicy>> iter_pc = PolicyMaker.policyCollection.entrySet().iterator();
@@ -158,7 +158,7 @@ public class PolicyChecker {
 		return result;
 	}
 	
-	public static int IsLibraryExternal(TreeSet<String> externalLibrarySet, String LibraryOrigin)
+	public static int isLibraryExternal(TreeSet<String> externalLibrarySet, String LibraryOrigin)
 	{
 		int result = 0;
 		if (externalLibrarySet.contains(LibraryOrigin))

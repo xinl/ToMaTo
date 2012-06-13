@@ -32,7 +32,7 @@ import edu.upenn.cis.tomato.data.ObjectMembers;
 import edu.upenn.cis.tomato.util.ErrorUtil;
 
 public class ObjectMemberAnalyzer {
-	public static void Analyze() throws Exception
+	public static void analyze() throws Exception
 	{
 		// Web page to be analyzed
 		String strUrl ="file:\\"+(new File("").getAbsolutePath())+"\\dat\\test\\objectMemberInvocation\\ObjectTest.html";
@@ -66,7 +66,7 @@ public class ObjectMemberAnalyzer {
 			
 					if (anonymousPattern.length > 1 && anonymousPattern[anonymousPattern.length-2].equalsIgnoreCase("anonymous"))
 					{
-						ObjectMembers anonMap= edu.upenn.cis.tomato.util.Util.GetLineRangeForCGNode(node, functionName);
+						ObjectMembers anonMap= edu.upenn.cis.tomato.util.Util.getLineRangeForCGNode(node, functionName);
 						if(anonMap!=null)
 						{
 							MemberFunctionInvocationRangeList.add(anonMap);
@@ -74,23 +74,23 @@ public class ObjectMemberAnalyzer {
 					}
 					else
 					{
-						ObjectMembers functionMap = edu.upenn.cis.tomato.util.Util.GetLineRangeForCGNode(node, functionName);
+						ObjectMembers functionMap = edu.upenn.cis.tomato.util.Util.getLineRangeForCGNode(node, functionName);
 						if(functionMap!=null)
 						{
 							GlobalFunctionRangeList.add(functionMap);
 						}
-						MemberFunctionDefinitionRangeList.addAll(edu.upenn.cis.tomato.util.Util.GetLineRangeForMemberFunctionDefinition(node, functionName));
+						MemberFunctionDefinitionRangeList.addAll(edu.upenn.cis.tomato.util.Util.getLineRangeForMemberFunctionDefinition(node, functionName));
 					}
 				}
 				else
 				{
-					ErrorUtil.ErrorMessage("Ill formated function name.");
+					ErrorUtil.printErrorMessage("Ill formated function name.");
 				}
 			}
 		}
 		
-		edu.upenn.cis.tomato.util.Util.RefineMemberFunctionDefinitionList(GlobalFunctionRangeList, MemberFunctionDefinitionRangeList);
-		edu.upenn.cis.tomato.util.Util.RefineMemberFunctionInvocationList(MemberFunctionInvocationRangeList, MemberFunctionDefinitionRangeList);
+		edu.upenn.cis.tomato.util.Util.refineMemberFunctionDefinitionList(GlobalFunctionRangeList, MemberFunctionDefinitionRangeList);
+		edu.upenn.cis.tomato.util.Util.refineMemberFunctionInvocationList(MemberFunctionInvocationRangeList, MemberFunctionDefinitionRangeList);
 		
 		edu.upenn.cis.tomato.util.DebugUtil.DEBUG_PrintFunctionRangeList(GlobalFunctionRangeList, "Global Function");
 		edu.upenn.cis.tomato.util.DebugUtil.DEBUG_PrintFunctionRangeList(MemberFunctionDefinitionRangeList, "Member Function Definition");

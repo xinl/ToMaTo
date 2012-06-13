@@ -70,8 +70,8 @@ public class ContextInsensitiveInformationFlow {
   */
 	
   // Used to build CG Node filters	
-  public static String PageNamePattern;	
-  public static String FunctionNamePattern;
+  public static String pageNamePattern;	
+  public static String functionNamePattern;
   
   // Policy decides which libraries are external
   public static TreeSet<String> externalLibrarySet;
@@ -96,18 +96,19 @@ public class ContextInsensitiveInformationFlow {
   // Use to debug function [analyze]
   public static boolean analyze_DEBUG = true;
   // Use to debug all the data structures
-  public static boolean Data_DEBUG = true;
+  public static boolean data_DEBUG = true;
 
   public ContextInsensitiveInformationFlow(ExplodedInterproceduralCFG eicfg, String pageNamePattern) {
 	
 	// For debugging purpose to build CG Node filters
-	PageNamePattern = pageNamePattern; FunctionNamePattern = "compute";
+	ContextInsensitiveInformationFlow.pageNamePattern = pageNamePattern;
+	ContextInsensitiveInformationFlow.functionNamePattern = "compute";
 	// This is used to determine instruction origin
-	icfg = eicfg;  externalLibrarySet = PolicyChecker.FetchExternalLibraryIDs();
+	icfg = eicfg;  externalLibrarySet = PolicyChecker.fetchExternalLibraryIDs();
 	// To build all the data structure needed
 	variableNumbering = this.initialize();
     
-    if(Data_DEBUG)
+    if(data_DEBUG)
     {
     	// DebugUtil.DEBUG_InformationFLow_PrintVariableNumbering();
     	DebugUtil.DEBUG_InformationFLow_PrintVariableNameMap();
@@ -139,7 +140,7 @@ public class ContextInsensitiveInformationFlow {
 			// CG node filter
 			if(initialize_DEBUG_Flow)
 			{
-				if (!(nodeName.startsWith(PageNamePattern) && nodeName.endsWith(FunctionNamePattern))) 
+				if (!(nodeName.startsWith(pageNamePattern) && nodeName.endsWith(functionNamePattern))) 
 				{
 					continue;
 				}
@@ -162,7 +163,7 @@ public class ContextInsensitiveInformationFlow {
 			int sourceOrigin = 0;
 			if(!IsFakeRoot)
 			{
-				sourceOrigin = PolicyChecker.IsLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.GetCGNodeOrigin(ir, method).toLowerCase());
+				sourceOrigin = PolicyChecker.isLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.getCGNodeOrigin(ir, method).toLowerCase());
 			}
 			ContextInsensitiveInformationFlow.functionOrigin.put(nodeName, sourceOrigin);
 			
@@ -175,7 +176,7 @@ public class ContextInsensitiveInformationFlow {
 				if(sNode_Method.getClass().getName().toString().equalsIgnoreCase(ToMaTo.CGNodeClassName))
 				{
 					calleeNodeSet.add(sNode);
-					functionOrigin.put(sNode_Method.getDeclaringClass().getName().toString(), PolicyChecker.IsLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.GetCGNodeOrigin(sNode_ir, sNode_Method).toLowerCase()));
+					functionOrigin.put(sNode_Method.getDeclaringClass().getName().toString(), PolicyChecker.isLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.getCGNodeOrigin(sNode_ir, sNode_Method).toLowerCase()));
 				}
 			}
 			if(initialize_DEBUG_Output)
@@ -194,7 +195,7 @@ public class ContextInsensitiveInformationFlow {
 			TreeSet<Integer> variableSet = new TreeSet<Integer>();
 			
 			// Build a basic variable name mapping
-			edu.upenn.cis.tomato.util.Util.GetLocalVariableNameMapping(node, nodeName, method, true, variableSet);
+			edu.upenn.cis.tomato.util.Util.getLocalVariableNameMapping(node, nodeName, method, true, variableSet);
 			if(initialize_DEBUG_Output)
 			{
 				DebugUtil.DEBUG_PrintDefinedAndUsed(node);
@@ -328,7 +329,7 @@ public class ContextInsensitiveInformationFlow {
 							}
 							
 							// Variable Name Mapping
-							TreeMap<Integer, String> nm = ToMaTo.VariableNameMapping.get(nodeName);
+							TreeMap<Integer, String> nm = ToMaTo.variableNameMapping.get(nodeName);
 							if(nm!=null && nm.get(vn)!=null)
 							{
 								String o = nm.get(vn);
@@ -390,7 +391,7 @@ public class ContextInsensitiveInformationFlow {
 							vn = ac[j].variableName+"@"+ac[j].variableDefiner;
 						}
 						
-						ToMaTo.VariableNameMapping.get(nodeName).put(ac[j].valueNumber, vn);
+						ToMaTo.variableNameMapping.get(nodeName).put(ac[j].valueNumber, vn);
 					}
 				}
 				
@@ -410,7 +411,7 @@ public class ContextInsensitiveInformationFlow {
 							vn = ac[j].variableName+"@"+ac[j].variableDefiner;
 						}
 						
-						ToMaTo.VariableNameMapping.get(nodeName).put(ac[j].valueNumber, vn);
+						ToMaTo.variableNameMapping.get(nodeName).put(ac[j].valueNumber, vn);
 					}
 				}
 
@@ -458,7 +459,7 @@ public class ContextInsensitiveInformationFlow {
 								System.out.println("Get Instruction Without Phi " + nodeName + " " + instruction);
 							}
 							
-							TreeMap<Integer, String> nm = ToMaTo.VariableNameMapping.get(nodeName);
+							TreeMap<Integer, String> nm = ToMaTo.variableNameMapping.get(nodeName);
 							if(nm!=null && nm.get(Use)!=null)
 							{
 								String object = nm.get(Use);
@@ -479,7 +480,7 @@ public class ContextInsensitiveInformationFlow {
 							
 							for(Integer vn : phi_vn)
 							{
-								TreeMap<Integer, String> nm = ToMaTo.VariableNameMapping.get(nodeName);	
+								TreeMap<Integer, String> nm = ToMaTo.variableNameMapping.get(nodeName);	
 								if(nm!=null && nm.get(vn)!=null)
 								{
 									String object = nm.get(vn);
@@ -503,7 +504,7 @@ public class ContextInsensitiveInformationFlow {
 								{
 									if(ContextInsensitiveInformationFlow.objectFieldMap.get(nodeName).get(vn).contains(instruction.getDeclaredField().getName().toString()))
 									{
-										TreeMap<Integer, String> nm = ToMaTo.VariableNameMapping.get(nodeName);
+										TreeMap<Integer, String> nm = ToMaTo.variableNameMapping.get(nodeName);
 										
 										if(nm!=null && nm.get(vn)!=null)
 										{
@@ -650,7 +651,7 @@ public class ContextInsensitiveInformationFlow {
 								vn = ac.variableName+"@"+ac.variableDefiner;
 							}
 							
-							ToMaTo.VariableNameMapping.get(nodeName).put(ac.valueNumber, vn);
+							ToMaTo.variableNameMapping.get(nodeName).put(ac.valueNumber, vn);
 						}
 //					}
 
@@ -675,7 +676,7 @@ public class ContextInsensitiveInformationFlow {
 								vn = ac.variableName+"@"+ac.variableDefiner;
 							}
 							
-							ToMaTo.VariableNameMapping.get(nodeName).put(ac.valueNumber, vn);
+							ToMaTo.variableNameMapping.get(nodeName).put(ac.valueNumber, vn);
 						}
 //					}
 					
@@ -802,7 +803,7 @@ public class ContextInsensitiveInformationFlow {
 		// CGNode filter, for debugging
 		if(getNodeTransferFunction_DEBUG_Flow)
 		{
-			if (!(methodName.startsWith(PageNamePattern) && methodName.endsWith(FunctionNamePattern)))
+			if (!(methodName.startsWith(pageNamePattern) && methodName.endsWith(functionNamePattern)))
 			{
 				return BitVectorIdentity.instance();
 			}
@@ -1401,7 +1402,7 @@ public class ContextInsensitiveInformationFlow {
     
     public TreeSet<Integer> getGlobalNumberingForVariableName(CGNode node, String nodeName, String variableName)
     {
- 	   TreeMap<Integer, String> vn2Name = ToMaTo.VariableNameMapping.get(nodeName);
+ 	   TreeMap<Integer, String> vn2Name = ToMaTo.variableNameMapping.get(nodeName);
  	   if(vn2Name == null)
  	   {
  		   return null;
@@ -1465,11 +1466,11 @@ public class ContextInsensitiveInformationFlow {
     	  // String functionNamePattern = "";
     	  
     	  String methodName = ebb.getMethod().getDeclaringClass().getName().toString();
-    	  TreeMap<Integer, String> nameMap = ToMaTo.VariableNameMapping.get(methodName);
+    	  TreeMap<Integer, String> nameMap = ToMaTo.variableNameMapping.get(methodName);
     	  TreeMap<Integer, Integer> originMap = instructionOrigin.get(methodName);
     	  
 		  // CGNode filter, for debugging
-		  if (!(methodName.startsWith(PageNamePattern) && methodName.endsWith(FunctionNamePattern))) 
+		  if (!(methodName.startsWith(pageNamePattern) && methodName.endsWith(functionNamePattern))) 
 		  {
 			  continue;
 		  }

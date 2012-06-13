@@ -20,18 +20,18 @@ import edu.upenn.cis.tomato.util.WarningUtil;
 
 public class AliasAnalysis {
 	
-	public static boolean DebugAliasAnalysis = false;
+	public static final boolean DEBUG_ALIAS_ANALYSIS = false;
 	
-	public static String PointerKeyword = "LocalPointerKey";
+	public static final String POINTER_KEYWORD = "LocalPointerKey";
 	
-	public static void FindVariableAlias(String pageNamePattern, CallGraph cg, PointerAnalysis pa) {
+	public static void findVariableAlias(String pageNamePattern, CallGraph cg, PointerAnalysis pa) {
 
 		// Variables of Interest
-		TreeMap<String, TreeSet<String>> VariableOfInterestSet = PolicyChecker.FetchVariableOfInterestSet();
+		TreeMap<String, TreeSet<String>> VariableOfInterestSet = PolicyChecker.fetchVariableOfInterestSet();
 		TreeMap<String, String> QueryVariableSet = new TreeMap<String, String>();
 		TreeSet<String> AnswerVariableSet = new TreeSet<String>();
 		
-		TreeSet<String> SystemVariableOfInterestList = VariableOfInterestSet.get(PolicyChecker.SystemVariableKey);
+		TreeSet<String> SystemVariableOfInterestList = VariableOfInterestSet.get(PolicyChecker.SYSTEM_VARIABLE_KEY);
 		TreeMap<String, TreeSet<String>> SystemVariableOfInterestSet = new TreeMap<String, TreeSet<String>>();
 		if(SystemVariableOfInterestList!=null)
 		{
@@ -53,7 +53,7 @@ public class AliasAnalysis {
 				}
 				else
 				{
-					ErrorUtil.ErrorMessage("Unexpected format of system variable list required alias analysis.");
+					ErrorUtil.printErrorMessage("Unexpected format of system variable list required alias analysis.");
 				}
 			}
 		}
@@ -75,13 +75,13 @@ public class AliasAnalysis {
 			// Take care of all the functions defined within the mashup page.
 			if(className.equalsIgnoreCase(ToMaTo.CGNodeClassName) && nodeName.startsWith(pageNamePattern))
 			{
-				TreeMap<Integer, String> LocalVariableNameMap = edu.upenn.cis.tomato.util.Util.GetLocalVariableNameMapping(node, nodeName, method, false, null);
+				TreeMap<Integer, String> LocalVariableNameMap = edu.upenn.cis.tomato.util.Util.getLocalVariableNameMapping(node, nodeName, method, false, null);
 				TreeSet<String> FunctionVariableOfInterest = null;
 				
 				// Take care of global but not system built-in variables.
 				if(nodeName.endsWith(ToMaTo.mainFunctionName))
 				{
-					FunctionVariableOfInterest = VariableOfInterestSet.get(PolicyChecker.GlobalVariableKey);
+					FunctionVariableOfInterest = VariableOfInterestSet.get(PolicyChecker.GLOBAL_VARIABLE_KEY);
 				}
 				else
 				{
@@ -90,7 +90,7 @@ public class AliasAnalysis {
 				
 				if(FunctionVariableOfInterest != null)
 				{
-					if(DebugAliasAnalysis)
+					if(DEBUG_ALIAS_ANALYSIS)
 					{
 						DebugUtil.DEBUG_PrintDefinedAndUsed(node);
 					}
@@ -110,12 +110,12 @@ public class AliasAnalysis {
 			// Take care of all the system built-in functions.
 			else if(className.equalsIgnoreCase(ToMaTo.CGNodeClassName))
 			{
-				TreeMap<Integer, String> LocalVariableNameMap = edu.upenn.cis.tomato.util.Util.GetLocalVariableNameMapping(node, nodeName, method, false, null);
+				TreeMap<Integer, String> LocalVariableNameMap = edu.upenn.cis.tomato.util.Util.getLocalVariableNameMapping(node, nodeName, method, false, null);
 				TreeSet<String> FunctionVariableOfInterest = SystemVariableOfInterestSet.get(functionName);
 
 				if(FunctionVariableOfInterest != null)
 				{
-					if(DebugAliasAnalysis)
+					if(DEBUG_ALIAS_ANALYSIS)
 					{
 						DebugUtil.DEBUG_PrintDefinedAndUsed(node);
 					}
@@ -130,7 +130,7 @@ public class AliasAnalysis {
 							String knownLocalName = ToMaTo.reverseSystemBuiltinVariables.get(functionName + " " + on);
 							if(knownLocalName == null)
 							{
-								ErrorUtil.ErrorMessage("Cannot find reverse name mapping for system built-in variable.");
+								ErrorUtil.printErrorMessage("Cannot find reverse name mapping for system built-in variable.");
 							}
 							else
 							{
@@ -148,7 +148,7 @@ public class AliasAnalysis {
 		while(iter_pks.hasNext())
 		{
 			PointerKey pk = (PointerKey) iter_pks.next();
-			if(pk.getClass().toString().endsWith(PointerKeyword))
+			if(pk.getClass().toString().endsWith(POINTER_KEYWORD))
 			{
 				String methodName = ((com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey)pk).getNode().getMethod().getDeclaringClass().getName().toString();
 				int vn = ((com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey)pk).getValueNumber();
@@ -162,11 +162,11 @@ public class AliasAnalysis {
 						while(PredPKSIter.hasNext())
 						{
 							Object apk = PredPKSIter.next();
-							if(apk.getClass().toString().endsWith(PointerKeyword) && !apk.equals(pk) && apk.toString().startsWith("[Node: <Code body of function"))
+							if(apk.getClass().toString().endsWith(POINTER_KEYWORD) && !apk.equals(pk) && apk.toString().startsWith("[Node: <Code body of function"))
 							{											
 								LocalPointerKey alpk = (com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey) apk; int vn_alias = alpk.getValueNumber();
 								CGNode aliasNode = alpk.getNode(); IMethod aliasMethod = aliasNode.getMethod(); String aliasNodeName = aliasMethod.getDeclaringClass().getName().toString();
-								TreeMap<Integer, String> AliasLocalVariableNameMap = edu.upenn.cis.tomato.util.Util.GetLocalVariableNameMapping(aliasNode, aliasNodeName, aliasMethod, false, null);
+								TreeMap<Integer, String> AliasLocalVariableNameMap = edu.upenn.cis.tomato.util.Util.getLocalVariableNameMapping(aliasNode, aliasNodeName, aliasMethod, false, null);
 								if(AliasLocalVariableNameMap != null)
 								{
 									AnswerVariableSet.add(QueryKey + " " + aliasNodeName + " " + vn_alias + " " + AliasLocalVariableNameMap.get(vn_alias));
@@ -178,7 +178,7 @@ public class AliasAnalysis {
 			}
 		}
 		
-		WarningUtil.AliasAnalysisWarning(QueryVariableSet, AnswerVariableSet, true, true);
+		WarningUtil.printAliasAnalysisWarning(QueryVariableSet, AnswerVariableSet, true, true);
 	}
 
 	// TODO This part of legacy code need to be handled

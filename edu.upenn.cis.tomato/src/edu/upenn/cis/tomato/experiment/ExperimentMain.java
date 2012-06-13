@@ -15,7 +15,7 @@ public class ExperimentMain {
 			// One can choose to print CGNode for function definitions or invocations.
 			// ObjectMemberInvocation.AnalyzeJavascriptCode(true, true);
 			
-			ObjectMemberAnalyzer.Analyze();
+			ObjectMemberAnalyzer.analyze();
 		} 
 		catch (Exception e) 
 		{

@@ -8,27 +8,27 @@ public class PolicyExample {
 	{
 		String libID1 = "ExternalScript-1.js";
 		String libID2 = "ExternalScript-2.js";
-		PolicyMaker.AddPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
-		PolicyMaker.AddPolicyRule(libID2.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultDeny, "alert");
+		PolicyMaker.addPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
+		PolicyMaker.addPolicyRule(libID2.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultDeny, "alert");
 	}
 	
 	public static void Example_AliasAnalysis_System()
 	{
 		String libID = "ExternalScript.js";
-		PolicyMaker.AddPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "window");
+		PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "window");
 	}
 	
 	public static void Example_AliasAnalysis_Global()
 	{
 		String libID = "ExternalScript.js";
-		PolicyMaker.AddPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "gVariable");
+		PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "gVariable");
 	}
 	
 	public static void Example_AliasAnalysis_User()
 	{
 		String libID = "ExternalScript.js";
-		PolicyMaker.AddPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "userAlias myCars");
-		PolicyMaker.AddPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "userAlias myTrucks");
+		PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "userAlias myCars");
+		PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "userAlias myTrucks");
 	}
 	
 	// TODO Add by Anand, need to be organized.
@@ -36,7 +36,7 @@ public class PolicyExample {
 	public static void Example_InformationFlow()
 	{
 		String libID = "ExternalJS1.js";
-		PolicyMaker.AddPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "o");
+		PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "o");
 	}
 	
 	// TODO Add by Anand, need to be organized.
@@ -44,16 +44,16 @@ public class PolicyExample {
 	public static void Example_ObjectMethodInvocation()
 	{
 		String libID1 = "ExternalJS1.js";
-		PolicyMaker.AddPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "hello");
-		PolicyMaker.AddPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
+		PolicyMaker.addPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "hello");
+		PolicyMaker.addPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
 	}
 	
 	// TODO Need more examples for testing code instrumentation
 	public static void Example_Instrumentation()
 	{
 		String libID1 ="ExternalScript-1.js";
-		PolicyMaker.AddPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
+		PolicyMaker.addPolicyRule(libID1.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
 		String libID2 ="ExternalScript-2.js";
-		PolicyMaker.AddPolicyRule(libID2.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
+		PolicyMaker.addPolicyRule(libID2.toLowerCase(), PolicyMaker.PolicyType_function, PolicyMaker.PolicyMode_DefaultAllow, "alert");
 	}
 }

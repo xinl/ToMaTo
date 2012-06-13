@@ -37,7 +37,7 @@ import edu.upenn.cis.tomato.util.ErrorUtil;
 
 public class ObjectMemberInvocation {
 	
-	public static void AnalyzeJavascriptCode(boolean IsPrintDefinition, boolean IsPrintInvocation) throws Exception
+	public static void analyzeJavaScriptCode(boolean IsPrintDefinition, boolean IsPrintInvocation) throws Exception
 	{
 		// Web page to be analyzed
 		String strUrl ="file:\\"+(new File("").getAbsolutePath())+"\\dat\\test\\objectMemberInvocation\\ObjectTest.html";
@@ -73,7 +73,7 @@ public class ObjectMemberInvocation {
 				}
 				else
 				{
-					ErrorUtil.ErrorMessage("Ill formated function name.");
+					ErrorUtil.printErrorMessage("Ill formated function name.");
 				}
 				
 				anonymousPattern = functionName.split("_");

@@ -24,7 +24,7 @@ public class PolicyMaker {
 		policyFileLocation = location;
 	}
 	
-	public static void StorePolicyToFile()
+	public static void storePolicyToFile()
 	{
 		try 
 		{
@@ -46,7 +46,7 @@ public class PolicyMaker {
 		} 
 	}
 		
-	public static void ReadPolicyFromFile()
+	public static void readPolicyFromFile()
 	{
 		try 
 		{
@@ -69,7 +69,7 @@ public class PolicyMaker {
 		}
 	}
 	
-	public static void AddPolicyRule(String library, int policyType, int policyMode, String rule)
+	public static void addPolicyRule(String library, int policyType, int policyMode, String rule)
 	{
 		LibraryPolicy lp = policyCollection.get(library);
 		if(lp == null)
