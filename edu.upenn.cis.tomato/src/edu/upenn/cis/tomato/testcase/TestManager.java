@@ -18,21 +18,14 @@ import com.ibm.wala.cast.js.html.jericho.JerichoHtmlParser;
 import com.ibm.wala.cast.js.ipa.callgraph.JSCFABuilder;
 import com.ibm.wala.cast.js.loader.JavaScriptLoader;
 import com.ibm.wala.cast.js.test.JSCallGraphBuilderUtil;
-import com.ibm.wala.cast.js.test.JSCallGraphBuilderUtil.CGBuilderType;
 import com.ibm.wala.cast.js.translator.CAstRhinoTranslatorFactory;
-import com.ibm.wala.cast.js.vis.JsViewer;
 import com.ibm.wala.classLoader.SourceFileModule;
 import com.ibm.wala.classLoader.SourceModule;
 import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
-import com.ibm.wala.ipa.cfg.ExplodedInterproceduralCFG;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.util.CancelException;
 
-import edu.upenn.cis.tomato.application.AliasAnalysis;
-import edu.upenn.cis.tomato.application.ContextInsensitiveInformationFlow;
 import edu.upenn.cis.tomato.application.FunctionInvocation;
-import edu.upenn.cis.tomato.application.ToMaTo;
 import edu.upenn.cis.tomato.policy.example.PolicyExample;
 
 public class TestManager extends JSCallGraphBuilderUtil{
@@ -68,11 +61,20 @@ public class TestManager extends JSCallGraphBuilderUtil{
 	public static void TestFunctionInvocation() throws ClassHierarchyException, IllegalArgumentException, IOException, CancelException {
 
 		// Mashup URL
-		String mashupURL = "file://"+(new File("").getAbsolutePath())+"/dat/test/function/BasicFunctionInvocation.html".replaceAll("/", File.separator);
+		String mashupURL = "file://"+(new File("").getAbsolutePath()+"/dat/test/function/BasicFunctionInvocation.html").replace("/", File.separator);
 		URL url = new URL(mashupURL); 
 		
 		// Parse Mashup Location
-		String[] urlPattern = mashupURL.split(File.separator);
+		String[] urlPattern = null;
+		if(File.separator.equals("\\"))
+		{
+			urlPattern = mashupURL.split("\\\\");
+		}
+		else
+		{
+			urlPattern = mashupURL.split(File.separator);
+		}
+		 
 		String MashupPageName = "L" + urlPattern[urlPattern.length-1];
 		
 		// Initialize Policy
@@ -97,7 +99,7 @@ public class TestManager extends JSCallGraphBuilderUtil{
 		FunctionInvocation.detectFunctionInvocationViolation(MashupPageName, cg);
 	}
 	
-//	// TODO: Add by Anand, need to be organized.
+//	TODO: Add by Anand, need to be organized.
 //	public static void TestObjectMethodInvocation() throws ClassHierarchyException, IllegalArgumentException, IOException, CancelException {
 //
 //		// Mashup URL
