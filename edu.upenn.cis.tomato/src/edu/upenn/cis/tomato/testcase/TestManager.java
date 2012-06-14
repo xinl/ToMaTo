@@ -88,21 +88,19 @@ public class TestManager extends JSCallGraphBuilderUtil{
 		
 		// Initialize Policy
 		PolicyExample.Example_FunctionInvocation();
-		
-	        System.out.println(url);
-	        JavaScriptLoader.addBootstrapFile(WebUtil.preamble);
-	        Set<MappedSourceModule> scripts = WebUtil.extractScriptFromHTML(url);
-	        MappedSourceModule script = (MappedSourceModule) (scripts.toArray(new SourceModule[scripts.size()])[0]);
-	        FileMapping mapping = script.getMapping(); // to map line numbers in temporary js file to original web page
-	        // building call graph
-	        JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(new WebPageLoaderFactory(
-	                                                                            new CAstRhinoTranslatorFactory(), 
-	                                                                            null), 
-	                                                                    scripts.toArray(new SourceModule[scripts.size()]),
-	                                                                    CGBuilderType.ZERO_ONE_CFA, 
-	                                                                    AstIRFactory.makeDefaultFactory());
-	        builder.setBaseURL(url);
-	        CallGraph cg = builder.makeCallGraph(builder.getOptions());
+        JavaScriptLoader.addBootstrapFile(WebUtil.preamble);
+        Set<MappedSourceModule> scripts = WebUtil.extractScriptFromHTML(url);
+        MappedSourceModule script = (MappedSourceModule) (scripts.toArray(new SourceModule[scripts.size()])[0]);
+        FileMapping mapping = script.getMapping(); // to map line numbers in temporary js file to original web page
+        // building call graph
+        JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(new WebPageLoaderFactory(
+                                                                            new CAstRhinoTranslatorFactory(), 
+                                                                            null), 
+                                                                    scripts.toArray(new SourceModule[scripts.size()]),
+                                                                    CGBuilderType.ZERO_ONE_CFA, 
+                                                                    AstIRFactory.makeDefaultFactory());
+        builder.setBaseURL(url);
+        CallGraph cg = builder.makeCallGraph(builder.getOptions());
 		
 		// Detect Function Invocation Violation
 		FunctionInvocation.detectFunctionInvocationViolation(MashupPageName, cg);
