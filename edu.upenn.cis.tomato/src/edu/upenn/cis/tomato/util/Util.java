@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.ibm.wala.cast.ir.ssa.AstGlobalRead;
 import com.ibm.wala.cast.loader.AstMethod;
 import com.ibm.wala.cast.tree.CAstSourcePositionMap.Position;
 import com.ibm.wala.classLoader.IMethod;
@@ -95,7 +96,7 @@ public class Util {
 
 	public static TreeMap<Integer, String> getLocalVariableNameMapping(
 			CGNode node, String nodeName, IMethod method,
-			boolean IsScopeIncluded, TreeSet<Integer> variableSet) {
+			boolean includeScope, TreeSet<Integer> variableSet) {
 		if (node == null) {
 			return null;
 		}
@@ -115,6 +116,11 @@ public class Util {
 			if (ssai[i] == null) {
 				continue;
 			}
+			
+			// filter out declaration IRs. Or else all variables will become aliases.
+			if ((ssai[i] instanceof AstGlobalRead) && ((AstGlobalRead) ssai[i]).getGlobalName().equals("global $$undefined")) {
+				 continue;
+			}
 
 			for (int j = 0; j < ssai[i].getNumberOfDefs(); j++) {
 				int def_vn = ssai[i].getDef(j);
@@ -124,7 +130,7 @@ public class Util {
 				}
 				if (ln != null) {
 					for (int k = 0; k < ln.length; k++) {
-						if (IsScopeIncluded) {
+						if (includeScope) {
 							LocalVariableNameMap.put(def_vn, ln[k] + "@"
 									+ nodeName);
 						} else {
@@ -142,7 +148,7 @@ public class Util {
 				}
 				if (ln != null) {
 					for (int k = 0; k < ln.length; k++) {
-						if (IsScopeIncluded) {
+						if (includeScope) {
 							LocalVariableNameMap.put(use_vn, ln[k] + "@"
 									+ nodeName);
 						} else {

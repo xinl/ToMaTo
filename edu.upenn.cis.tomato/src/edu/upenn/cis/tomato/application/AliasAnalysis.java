@@ -57,7 +57,6 @@ public class AliasAnalysis {
 				}
 			}
 		}
-		System.out.println("!" + SystemVariableOfInterestSet);
 		// Iterate over All CGNodes to build QueryVariableSet
 	    Iterator<CGNode> iter_cg = cg.iterator(); 
 		while (iter_cg.hasNext()) 
@@ -142,7 +141,7 @@ public class AliasAnalysis {
 			}
 		}
 		//XXX
-                System.out.println(QueryVariableSet);
+		System.out.println(QueryVariableSet);
 		// Do pointer analysis according to QueryVariableSet and build AnswerVariableSet
 		HeapGraph hg = pa.getHeapGraph(); Iterator<PointerKey> iter_pks = pa.getPointerKeys().iterator();
 		while(iter_pks.hasNext())
@@ -153,7 +152,7 @@ public class AliasAnalysis {
 				String methodName = ((com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey)pk).getNode().getMethod().getDeclaringClass().getName().toString();
 				int vn = ((com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey)pk).getValueNumber();
 				String QueryKey = methodName + " " + vn;
-				if(QueryVariableSet.containsKey(QueryKey) || true) //XXX
+				if(QueryVariableSet.containsKey(QueryKey))
 				{
 					Iterator<Object> SucIKSIter = hg.getSuccNodes(pk);
 					while(SucIKSIter.hasNext())

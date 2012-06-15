@@ -31,6 +31,14 @@ public class PolicyExample {
 		PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "userAlias myTrucks");
 	}
 	
+	public static void Example_AliasAnalysis_Function()
+    {
+            String libID = "Alias_Function.js";
+            PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "myObject showArgs");
+            PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "myObject showMsg");
+            PolicyMaker.addPolicyRule(libID.toLowerCase(), PolicyMaker.PolicyType_Variable, PolicyMaker.PolicyMode_DefaultAllow, "invokeObj1 foo");
+    }
+	
 	// TODO Add by Anand, need to be organized.
 	// Source code of ExternalJS1.js is placed under dat/todo/
 	public static void Example_InformationFlow()
