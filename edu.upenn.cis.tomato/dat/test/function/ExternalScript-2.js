@@ -1,3 +1,5 @@
+var calculator = {multiply: function(a, b){ return a * b; } };
+
 function substraction(f, g)
 { 
   return f-g;
@@ -11,4 +13,5 @@ function innerAlert2()
  	addition(5,9);
  	substraction(1,3);
  	addition(10,12);
+ 	calculator.multiply(2, 3);
 }

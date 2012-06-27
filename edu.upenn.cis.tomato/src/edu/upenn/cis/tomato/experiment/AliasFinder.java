@@ -54,7 +54,7 @@ public class AliasFinder {
                                                                     scripts.toArray(new SourceModule[scripts.size()]),
                                                                     CGBuilderType.ONE_CFA_PRECISE_LEXICAL, 
                                                                     AstIRFactory.makeDefaultFactory());
-        builder.setBaseURL(url);
+        //builder.setBaseURL(url);
         CallGraph cg = builder.makeCallGraph(builder.getOptions());
         PointerAnalysis pa = builder.getPointerAnalysis();
         
