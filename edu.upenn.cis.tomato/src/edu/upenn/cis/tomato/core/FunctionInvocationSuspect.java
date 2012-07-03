@@ -4,19 +4,17 @@ import java.util.Set;
 
 public class FunctionInvocationSuspect extends Suspect {
 	public FunctionInvocationSuspect(Position caller, Position callee) {
-		//TODO
-		super(null);
+		super(caller);
+		super.attributes.put("callee", callee);
 	}
 	public Position getCallerPosition() {
-		//TODO
-		return null;
+		return super.pos;
 	}
 	public Position getCalleePosition() {
-		//TODO
-		return null;
+		return (Position) super.getAttribute("callee");
 	}
 	public Set<Suspect> getAliases() {
-		//TODO
+		//TODO: return the alias group for callee
 		return null;
 	}
 }
