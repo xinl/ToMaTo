@@ -16,11 +16,6 @@ public class PolicyNode {
 		this.value = value;
 	}
 	
-//	public PolicyNode(PolicyNode node) {
-//		this.type = node.type;
-//		this.value = node.value;
-//	}
-	
 	public PolicyNode clone() {
 		PolicyNode clone = new PolicyNode(type, value);
 		if (left != null) clone.left = left.clone();
@@ -65,8 +60,19 @@ public class PolicyNode {
 	}
 
 	public String toString() {
-		//TODO:
-		return null;
+		switch(type) {
+		case ROOT:
+		case AND:
+		case OR:
+			return "(" + left.toString() + ") " + type.toString() + " (" + right.toString() + ")";
+		case NOT:
+			return type.toString() + "(" + left.toString() + ")";
+		case TERM:
+		case ACTION:
+			return value.toString();
+		default:
+			return "";
+		}
 	}
 
 	public enum NodeType {

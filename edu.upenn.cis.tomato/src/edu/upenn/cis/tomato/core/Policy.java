@@ -12,6 +12,7 @@ import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
 
 public class Policy {
 	
+	// some shortcut names
 	static final NodeType AND = NodeType.AND;
 	static final NodeType OR = NodeType.OR;
 	static final NodeType NOT = NodeType.NOT;
@@ -163,7 +164,7 @@ public class Policy {
 		
 		if (node.getType() == AND) {
 			// x & (a | b) ==> (x & a) | (x & b)
-			// x can be any non-OR node, because the clone will copy all children nodes.
+			// x can be any kind of node, because the clone will copy all children nodes.
 			if (node.getRight().getType() == OR) {
 				PolicyNode andNode = node;
 				PolicyNode x = node.getLeft();
