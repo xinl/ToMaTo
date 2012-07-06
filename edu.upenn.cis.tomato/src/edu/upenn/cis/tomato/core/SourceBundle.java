@@ -2,21 +2,39 @@ package edu.upenn.cis.tomato.core;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.InvalidParameterException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.htmlparser.jericho.HTMLElementName;
+import net.htmlparser.jericho.OutputDocument;
+import net.htmlparser.jericho.Source;
+import net.htmlparser.jericho.StartTag;
+
 import com.ibm.wala.cast.js.html.DefaultSourceExtractor;
-import com.ibm.wala.cast.js.html.IUrlResolver;
-import com.ibm.wala.cast.js.html.JSSourceExtractor;
+import com.ibm.wala.cast.js.html.FileMapping;
+import com.ibm.wala.cast.js.html.IHtmlParser;
+import com.ibm.wala.cast.js.html.ITag;
+import com.ibm.wala.cast.js.html.IdentityUrlResolver;
+import com.ibm.wala.cast.js.html.MappedSourceFileModule;
 import com.ibm.wala.cast.js.html.MappedSourceModule;
+import com.ibm.wala.cast.js.html.SourceRegion;
 import com.ibm.wala.cast.js.html.UnicodeReader;
 import com.ibm.wala.cast.js.html.jericho.JerichoHtmlParser;
+import com.ibm.wala.cast.tree.CAstSourcePositionMap.Position;
+import com.ibm.wala.util.collections.Pair;
 
 /**
  * A bundle of the entry point HTML page and all JavaScript file it referred to.
@@ -25,75 +43,111 @@ import com.ibm.wala.cast.js.html.jericho.JerichoHtmlParser;
  * analysis.
  * 
  * @author Xin Li
- * @version July 3, 2012
+ * @version July 6, 2012
  */
 public class SourceBundle {
-	private String entryPoint;
-	private Map<String, String> sources;
+	private URI entryPointURI;
+	private URI baseURI;
+	private Map<URI, String> sources = new HashMap<URI, String>();
 	private Set<MappedSourceModule> sourceModules;
 	private int anonymousSourceCounter = 0;
 
 	/**
 	 * Construct new SourceBundle.
 	 * 
-	 * @param entryPoint
-	 *            the URL of the entry point HTML page.
+	 * @param entryPointURI
+	 *            the URI of the entry point HTML page.
 	 * @throws IOException
+	 * @throws URISyntaxException
 	 */
-	public SourceBundle(String entryPoint) throws IOException {
-		this.entryPoint = entryPoint;
-		addSource(entryPoint);
+	public SourceBundle(URI entryPointURI) throws InvalidParameterException, IOException {
+		if (!entryPointURI.isAbsolute()) {
+			throw new InvalidParameterException("Entry Point URI has to be absolute.");
+		}
+		this.entryPointURI = entryPointURI.normalize();
+		this.baseURI = getBaseURI(this.entryPointURI);
 
-		JSSourceExtractor extractor = new DefaultSourceExtractor();
-		this.sourceModules = extractor.extractSources(new URL(entryPoint), new JerichoHtmlParser(), new SourceBundleUrlResolver());
+		SourceBundleSourceExtractor extractor = new SourceBundleSourceExtractor();
+		this.sourceModules = extractor.extractSources(entryPointURI, new JerichoHtmlParser());
+	}
+
+	private URI getBaseURI(URI uri) {
+		String path = uri.getPath();
+		int separatorIndex = path.lastIndexOf("/");
+		String newPath = path.substring(0, separatorIndex + 1);
+		String authority = (uri.getAuthority() != null) ? uri.getAuthority() : "";
+		try {
+			return new URI(uri.getScheme() + "://" + authority + newPath);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**
-	 * Check whether a source of specified URL is in this bundle.
+	 * Get the URI of the entry point HTML page.
 	 * 
-	 * @param url
-	 *            URL of the source to check.
+	 * @return the URI of the entry point
+	 */
+	public URI getEntryPointURI() {
+		return entryPointURI;
+	}
+
+	/**
+	 * Check whether a source of specified URI is in this bundle.
+	 * 
+	 * @param uri
+	 *            URI of the source to check.
 	 * @return whether the specified source is in this bundle
 	 */
-	public boolean hasSource(String url) {
-		return sources.containsKey(url);
+	public boolean hasSource(URI uri) {
+		uri = resolveURI(uri);
+		return sources.containsKey(uri);
 
 	}
 
 	/**
-	 * Get the content of the source of specified URL.
+	 * Get a Set of the URIs of all sources in this bundle.
 	 * 
-	 * @param url
-	 *            URL of the source
+	 * @return A Set of URIs of sources
+	 */
+	public Set<URI> getSourceURIs() {
+		return sources.keySet();
+	}
+
+	/**
+	 * Get the content of the source of specified URI.
+	 * 
+	 * @param uri
+	 *            URI of the source
 	 * @return the content of the source or <code>null</code> if the source
 	 *         doesn't exist.
 	 */
-	public String getSource(String url) {
-		return sources.get(url);
+	public String getSourceContent(URI uri) {
+		uri = resolveURI(uri);
+		return sources.get(uri);
 
 	}
 
 	/**
-	 * Get a substring of source content of specified URL. The substring begins
-	 * at <code>startOffset</code> and ends with character at
-	 * <code>endOffset - 1</code>.
+	 * Get an InputStream of the source content of the specified URI.
 	 * 
-	 * @param url
-	 *            URL of the source
-	 * @param startOffset
-	 *            the character index of the start of the substring
-	 * @param endOffset
-	 *            the character index of the end of the substring
-	 * @return the substring of source content or <code>null</code> if the
-	 *         source doesn't exist.
+	 * @param uri
+	 *            URI to the source
+	 * @return An InputStream to the source content.
 	 */
-	public String getSource(String url, int startOffset, int endOffset) {
-		String content = sources.get(url);
-		if (content == null)
+	private InputStream getSourceInputStream(URI uri) {
+		String str = getSourceContent(uri);
+		if (str == null) {
 			return null;
-		else
-			return content.substring(startOffset, endOffset);
-
+		}
+		try {
+			InputStream is = new ByteArrayInputStream(str.getBytes("UTF-8"));
+			return is;
+		} catch (UnsupportedEncodingException e) {
+			System.err.println(e.getMessage());
+			return null;
+		}
 	}
 
 	/**
@@ -106,37 +160,44 @@ public class SourceBundle {
 	}
 
 	/**
-	 * Add a source to the bundle, fetches the content by URL specified.
+	 * Add a source to the bundle, fetches the content by URI specified.
 	 * 
-	 * @param url
-	 *            the URL of the source
+	 * @param uri
+	 *            the URI of the source
 	 * @throws IOException
 	 */
-	public void addSource(String url) throws IOException {
-		sources.put(url, fetchURLContent(url));
+	public URI addSource(URI uri) throws IOException {
+		return addSource(uri, fetchURIContent(uri));
 	}
 
 	/**
 	 * Add a source to the bundle with designated content.
 	 * 
-	 * @param url
-	 *            the URL of the new source. It doesn't have to exists or be
+	 * @param uri
+	 *            the URI of the new source. It doesn't have to exists or be
 	 *            readable.
 	 * @param content
 	 *            the designated content of the new source
 	 */
-	public void addSource(String url, String content) {
-		sources.put(url, content);
+	public URI addSource(URI uri, String content) {
+		URI key = resolveURI(uri);
+		sources.put(key, content);
+		return key;
+	}
+	
+	private URI resolveURI(URI uri) {
+		// convert URI to absolute URI
+		return baseURI.resolve(uri.normalize());
 	}
 
 	/**
 	 * Save all sources in the bundle to a local path, including the HTML page
 	 * and all referred JavaScript files. It will try to infer file name from
-	 * URL. If failed, file names will be set to "default.html" and
+	 * URI. If failed, file names will be set to "default.html" and
 	 * "default-n.js", where n is a unique integer assigned. The inferred path
 	 * of the script files will be a sub-directory under output path name
 	 * whenever possible, otherwise the full directory structure starting from
-	 * host name will be put under output path. For example: If the URL is
+	 * host name will be put under output path. For example: If the URI is
 	 * http://www.example.com/dir/script.js, the script file will be put under
 	 * [output_path]/www.example.com/dir/
 	 * 
@@ -151,61 +212,103 @@ public class SourceBundle {
 			throw new IOException("Invalid path.");
 		}
 
-		// TODO: we should update the src of script tags in HTML page,
-		// but that's difficult before WALA guys fix SourceExtractor inheritance
-		// issue (https://github.com/wala/WALA/issues/3)
-		for (Map.Entry<String, String> entry : sources.entrySet()) {
-			File dir = new File(path, inferPathFromURL(entry.getKey()));
-			if (!dir.exists()) {
-				dir.mkdir();
-			}
-			File file = new File(dir, inferFileNameFromURL(entry.getKey()));
-			if (!file.exists()) {
-				file.createNewFile();
-			}
+		// preparing local file names and new URIs pointing to the script files
+		Map<URI, File> scriptFiles = new HashMap<URI, File>();
+		Map<URI, URI> newScriptURIs = new HashMap<URI, URI>();
 
-			FileWriter fw = new FileWriter(file.getName());
-			BufferedWriter bw = new BufferedWriter(fw);
-			try {
-				bw.write(entry.getValue());
-			} finally {
-				bw.close();
-			}
+		File entryPointFile = new File(path, inferFileFromURI(getEntryPointURI()));
+		URI newEntryPointURI = entryPointFile.toURI();
+		URI newBaseURI = getBaseURI(newEntryPointURI);
+
+		Set<URI> scriptURIs = getSourceURIs();
+		scriptURIs.remove(getEntryPointURI());
+
+		for (URI uri : scriptURIs) {
+			File file = new File(path, inferFileFromURI(uri));
+			URI newURI = newBaseURI.relativize(file.toURI());
+			scriptFiles.put(uri, file);
+			newScriptURIs.put(uri, newURI);
+		}
+
+		// write the updated HTML page first
+		writeFile(entryPointFile, localizeScriptSrcs(newScriptURIs));
+		
+		// then write all script files
+		for (URI uri : scriptURIs) {
+			writeFile(scriptFiles.get(uri), sources.get(uri));
 		}
 
 		anonymousSourceCounter = 0;
 	}
 
-	private String inferFileNameFromURL(String url) {
-		url = URI.create(url).toString(); // escape url string
-		int separatorIndex = url.lastIndexOf("/");
+	private String localizeScriptSrcs(Map<URI, URI> uriMapping) {
+		// Use Jericho parser to modify HTML page
+		Source source = new Source(sources.get(entryPointURI));
+		OutputDocument output = new OutputDocument(source);
+		for (StartTag tag : source.getAllStartTags(HTMLElementName.SCRIPT)) {
+			String src = tag.getAttributeValue("src");
+			if (src != null) {
+				URI oldURI;
+				try {
+					oldURI = resolveURI(new URI(src));
+					URI newURI = uriMapping.get(oldURI);
+					output.replace(tag.getAttributes().get("src"), "src=\"" + newURI + "\"");
+				} catch (URISyntaxException e) {
+					e.printStackTrace();
+					System.err.println("Invalid URL syntax: " + src);
+				}
+				
+			}
+		}
+		return output.toString();
+	}
 
-		if (separatorIndex < 0 || separatorIndex == url.length() - 1) {
-			// if URL has no file name
-			if (url.equals(entryPoint)) {
-				return "default.html";
+	private void writeFile(File file, String content) throws IOException {
+		file.getParentFile().mkdirs();
+
+		FileWriter fw = new FileWriter(file);
+		BufferedWriter bw = new BufferedWriter(fw);
+		try {
+			bw.write(content);
+		} finally {
+			bw.close();
+		}
+	}
+
+	private String inferFileFromURI(URI uri) {
+		String result = "";
+
+		uri = baseURI.relativize(uri);
+		// now uri will be relative iff it's under baseURI
+
+		if (uri.isAbsolute()) {
+			if (uri.getHost() == null) {
+				result += "localhost/";
+			} else {
+				result += uri.getHost() + "/";
+			}
+		}
+
+		String path = uri.normalize().getPath(); // normalize removes "./"s
+		path = path.replaceFirst("^/+", ""); // trim extra "/"s
+		path = path.replaceFirst("^/(\\.\\./)+", ""); // trim "/../../../"s
+
+		result += path;
+
+		// take care of file name
+		int separatorIndex = path.lastIndexOf("/");
+		if (separatorIndex < 0 || separatorIndex == path.length() - 1) {
+			// if URI has no file name
+			if (uri.equals(entryPointURI)) {
+				result += "default.html";
 			} else {
 				anonymousSourceCounter++;
-				return "default-" + anonymousSourceCounter + ".js";
+				result += "default-" + anonymousSourceCounter + ".js";
 			}
 		} else {
-			// discard fragment and query parts, if any
-			int anchorIndex = url.lastIndexOf("#");
-			int queryIndex = url.lastIndexOf("?");
-			int endIndex;
-			if (anchorIndex < 0 && queryIndex < 0) {
-				// both not found
-				endIndex = url.length();
-			} else if (anchorIndex >= 0 && queryIndex >= 0) {
-				// both found
-				endIndex = (anchorIndex < queryIndex) ? anchorIndex : queryIndex;
-			} else {
-				// one found, one not found
-				endIndex = (anchorIndex > queryIndex) ? anchorIndex : queryIndex;
-			}
-			String rawName = url.substring(separatorIndex + 1, endIndex);
+			String rawName = path.substring(separatorIndex + 1);
 			// assign proper extension
-			if (url.equals(entryPoint)) {
+			if (uri.equals(entryPointURI)) {
 				if (rawName.endsWith(".html") || rawName.endsWith(".htm")) {
 					return rawName;
 				} else {
@@ -219,44 +322,27 @@ public class SourceBundle {
 				}
 			}
 		}
-	}
 
-	private String inferPathFromURL(String url) {
-		url = URI.create(url).toString(); // escape url string
-		if (url.equals(entryPoint)) {
-			return ""; // HTML page should be in the root directory
-		}
-
-		int separatorIndex = url.lastIndexOf("/");
-		String path;
-		if (url.startsWith(entryPoint)) {
-			// script file is at the same dir level as html page, or deeper
-			path = url.substring(entryPoint.length(), separatorIndex + 1);
-			// + 1 to including the trailing separator
-		} else {
-			// script file is in some other place
-			path = url.substring(0, separatorIndex + 1).replaceFirst("\\w*:/+", "");
-			// chop off the head and tail, note all /'s are choped from head.
-		}
 		if (!File.separator.equals("/")) {
-			path.replaceAll("/", File.separator); // convert to platform
-													// specific path
+			// convert to platform specific path
+			result.replaceAll("/", File.separator);
 		}
-		return path;
-
+		return result;
 	}
 
 	/**
-	 * Fetch the content at an URL.
+	 * Fetch the content at an URI.
 	 * 
-	 * @param urlString
-	 *            the URL pointing to the content.
-	 * @return the content at the specified URL.
+	 * @param uri
+	 *            the URI pointing to the content.
+	 * @return the content at the specified URI.
 	 * @throws IOException
 	 */
-	public static String fetchURLContent(String urlString) throws IOException {
-		URL url = new URL(urlString);
-		InputStream inputStream = url.openConnection().getInputStream();
+	private String fetchURIContent(URI uri) throws IOException {
+		uri = baseURI.resolve(uri); // convert to absolute URI
+		URL url = uri.toURL();
+		
+		InputStream inputStream = url.openStream();
 		try {
 			String line;
 			BufferedReader reader = new BufferedReader(new UnicodeReader(inputStream, "UTF8"));
@@ -270,24 +356,58 @@ public class SourceBundle {
 		}
 	}
 
-	/**
-	 * The URL resolver passed to the source extractor to intercept and cache
-	 * the external JavaScript files referenced in the entry point page.
-	 */
-	public class SourceBundleUrlResolver implements IUrlResolver {
+	protected class SourceBundleSourceExtractor extends DefaultSourceExtractor {
 
-		public URL resolve(URL input) {
-			try {
-				addSource(input.toString());
-			} catch (IOException e) {
-				throw new RuntimeException("Error reading URL: " + input);
+		protected Set<MappedSourceModule> extractSources(URI entryPointURI, IHtmlParser htmlParser) throws IOException {
+			
+			URI absoluteURI = addSource(entryPointURI); // add entry point to Source Bundle
+			URL entryPointURL = absoluteURI.toURL();
+			InputStream inputStreamReader = getSourceInputStream(absoluteURI);
+			IGeneratorCallback htmlCallback = new HtmlCallBack(entryPointURL);
+			htmlParser.parse(entryPointURL, inputStreamReader, htmlCallback, entryPointURL.getFile());
+
+			SourceRegion finalRegion = new SourceRegion();
+			htmlCallback.writeToFinalRegion(finalRegion);
+
+			// writing the final region into one SourceFileModule.
+			File outputFile = File.createTempFile(new File(entryPointURL.getFile()).getName(), ".js");
+			if (outputFile.exists()) {
+				outputFile.delete();
 			}
-			return input;
+			outputFile.deleteOnExit();
+
+			FileMapping fileMapping = finalRegion.writeToFile(new PrintStream(outputFile));
+			MappedSourceModule singleFileModule = new MappedSourceFileModule(outputFile, outputFile.getName(), fileMapping);
+			return Collections.singleton(singleFileModule);
 		}
 
-		public URL deResolve(URL input) {
-			return input;
-		}
+		protected class HtmlCallBack extends DefaultSourceExtractor.HtmlCallback {
 
+			public HtmlCallBack(URL entrypointUrl) {
+				super(entrypointUrl, new IdentityUrlResolver());
+			}
+
+			@Override
+			protected void handleScript(ITag tag) {
+				Pair<String, Position> value = tag.getAttributeByName("src");
+
+				try {
+					if (value != null) {
+						// script is out-of-line
+						String srcString = value.fst;
+						URI srcURI = new URI(srcString);
+						URI absoluteURI = addSource(srcURI);
+						scriptRegion.println(getSourceContent(absoluteURI), tag.getElementPosition(), absoluteURI.toURL());
+					}
+
+				} catch (IOException e) {
+					System.err.println("Error reading script file: " + e.getMessage());
+					//e.printStackTrace();
+				} catch (URISyntaxException e) {
+					System.err.println("Invalid URI syntax: " + value.fst);
+				}
+			}
+
+		}
 	}
 }
