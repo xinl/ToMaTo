@@ -15,6 +15,7 @@ import java.net.URL;
 import java.security.InvalidParameterException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -112,7 +113,7 @@ public class SourceBundle {
 	 * @return A Set of URIs of sources
 	 */
 	public Set<URI> getSourceURIs() {
-		return sources.keySet();
+		return new HashSet<URI>(sources.keySet());
 	}
 
 	/**
@@ -184,7 +185,7 @@ public class SourceBundle {
 		sources.put(key, content);
 		return key;
 	}
-	
+
 	private URI resolveURI(URI uri) {
 		// convert URI to absolute URI
 		return baseURI.resolve(uri.normalize());
@@ -202,9 +203,10 @@ public class SourceBundle {
 	 * [output_path]/www.example.com/dir/
 	 * 
 	 * @param pathName
+	 * @return a Set of File objects that has been written
 	 * @throws IOException
 	 */
-	public void saveSourceBundleTo(String pathName) throws IOException {
+	public Set<File> saveSourceBundleTo(String pathName) throws IOException {
 
 		File path = new File(pathName);
 
@@ -232,18 +234,31 @@ public class SourceBundle {
 
 		// write the updated HTML page first
 		writeFile(entryPointFile, localizeScriptSrcs(newScriptURIs));
-		
+
 		// then write all script files
 		for (URI uri : scriptURIs) {
 			writeFile(scriptFiles.get(uri), sources.get(uri));
 		}
 
 		anonymousSourceCounter = 0;
+
+		Set<File> fileWritten = new HashSet<File>(scriptFiles.values());
+		fileWritten.add(entryPointFile);
+		return fileWritten;
 	}
 
+	/**
+	 * Update the HTML page's script tags to refer to saved script files.
+	 * 
+	 * @param uriMapping
+	 *            mapping of original absolute URIs and new URIs pointing to the
+	 *            newly written script files.
+	 * @return modified HTML page content
+	 */
 	private String localizeScriptSrcs(Map<URI, URI> uriMapping) {
 		// Use Jericho parser to modify HTML page
-		Source source = new Source(sources.get(entryPointURI));
+		String htmlText = getSourceContent(getEntryPointURI());
+		Source source = new Source(htmlText);
 		OutputDocument output = new OutputDocument(source);
 		for (StartTag tag : source.getAllStartTags(HTMLElementName.SCRIPT)) {
 			String src = tag.getAttributeValue("src");
@@ -257,7 +272,7 @@ public class SourceBundle {
 					e.printStackTrace();
 					System.err.println("Invalid URL syntax: " + src);
 				}
-				
+
 			}
 		}
 		return output.toString();
@@ -278,18 +293,18 @@ public class SourceBundle {
 	private String inferFileFromURI(URI uri) {
 		String result = "";
 
-		uri = baseURI.relativize(uri);
+		URI reURI = baseURI.relativize(uri);
 		// now uri will be relative iff it's under baseURI
 
-		if (uri.isAbsolute()) {
-			if (uri.getHost() == null) {
+		if (reURI.isAbsolute()) {
+			if (reURI.getAuthority() == null) {
 				result += "localhost/";
 			} else {
-				result += uri.getHost() + "/";
+				result += reURI.getAuthority() + "/";
 			}
 		}
 
-		String path = uri.normalize().getPath(); // normalize removes "./"s
+		String path = reURI.normalize().getPath(); // normalize removes "./"s
 		path = path.replaceFirst("^/+", ""); // trim extra "/"s
 		path = path.replaceFirst("^/(\\.\\./)+", ""); // trim "/../../../"s
 
@@ -297,9 +312,10 @@ public class SourceBundle {
 
 		// take care of file name
 		int separatorIndex = path.lastIndexOf("/");
-		if (separatorIndex < 0 || separatorIndex == path.length() - 1) {
+		boolean isEntryPoint = uri.equals(entryPointURI);
+		if (separatorIndex == path.length() - 1) {
 			// if URI has no file name
-			if (uri.equals(entryPointURI)) {
+			if (isEntryPoint) {
 				result += "default.html";
 			} else {
 				anonymousSourceCounter++;
@@ -308,7 +324,7 @@ public class SourceBundle {
 		} else {
 			String rawName = path.substring(separatorIndex + 1);
 			// assign proper extension
-			if (uri.equals(entryPointURI)) {
+			if (isEntryPoint) {
 				if (rawName.endsWith(".html") || rawName.endsWith(".htm")) {
 					return rawName;
 				} else {
@@ -341,7 +357,7 @@ public class SourceBundle {
 	private String fetchURIContent(URI uri) throws IOException {
 		uri = baseURI.resolve(uri); // convert to absolute URI
 		URL url = uri.toURL();
-		
+
 		InputStream inputStream = url.openStream();
 		try {
 			String line;
@@ -359,8 +375,9 @@ public class SourceBundle {
 	protected class SourceBundleSourceExtractor extends DefaultSourceExtractor {
 
 		protected Set<MappedSourceModule> extractSources(URI entryPointURI, IHtmlParser htmlParser) throws IOException {
-			
-			URI absoluteURI = addSource(entryPointURI); // add entry point to Source Bundle
+			// add entry point to Source Bundle
+			URI absoluteURI = addSource(entryPointURI);
+
 			URL entryPointURL = absoluteURI.toURL();
 			InputStream inputStreamReader = getSourceInputStream(absoluteURI);
 			IGeneratorCallback htmlCallback = new HtmlCallBack(entryPointURL);
@@ -402,7 +419,6 @@ public class SourceBundle {
 
 				} catch (IOException e) {
 					System.err.println("Error reading script file: " + e.getMessage());
-					//e.printStackTrace();
 				} catch (URISyntaxException e) {
 					System.err.println("Invalid URI syntax: " + value.fst);
 				}
