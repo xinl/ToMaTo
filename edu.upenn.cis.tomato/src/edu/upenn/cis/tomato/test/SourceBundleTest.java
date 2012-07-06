@@ -86,7 +86,7 @@ public class SourceBundleTest {
 		// System.out.println(sb.getEntryPointURI());
 		// System.out.println(sb.getSourceContent(sb.getEntryPointURI()));
 		
-		URI extURI = new URI("http://www.example.com/js/common.js");
+		URI extURI = new URI("http://www.example.com///../../js/");
 		String extContent = "function fooo(bar) { return bar; }\n";
 		sb.addSource(extURI, extContent);
 		
@@ -111,6 +111,7 @@ public class SourceBundleTest {
 				assertEquals(extContent, readFile(file));
 			}
 			file.delete();
+			//System.out.println(file);
 		}
 
 	}

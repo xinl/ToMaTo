@@ -305,10 +305,8 @@ public class SourceBundle {
 		}
 
 		String path = reURI.normalize().getPath(); // normalize removes "./"s
-		path = path.replaceFirst("^/+", ""); // trim extra "/"s
-		path = path.replaceFirst("^/(\\.\\./)+", ""); // trim "/../../../"s
-
-		result += path;
+		path = path.replaceFirst("^/+", ""); // trim extra "/"s at the beginning
+		path = path.replaceFirst("^(?:\\.\\./)+", ""); // trim extra "../../"s
 
 		// take care of file name
 		int separatorIndex = path.lastIndexOf("/");
@@ -316,33 +314,31 @@ public class SourceBundle {
 		if (separatorIndex == path.length() - 1) {
 			// if URI has no file name
 			if (isEntryPoint) {
-				result += "default.html";
+				path += "default.html";
 			} else {
 				anonymousSourceCounter++;
-				result += "default-" + anonymousSourceCounter + ".js";
+				path += "default-" + anonymousSourceCounter + ".js";
 			}
 		} else {
 			String rawName = path.substring(separatorIndex + 1);
 			// assign proper extension
 			if (isEntryPoint) {
-				if (rawName.endsWith(".html") || rawName.endsWith(".htm")) {
-					return rawName;
-				} else {
-					return rawName + ".html";
+				if (!path.endsWith(".html") && !rawName.endsWith(".htm")) {
+					path += ".html";
 				}
 			} else {
-				if (rawName.endsWith(".js")) {
-					return rawName;
-				} else {
-					return rawName + ".js";
+				if (!rawName.endsWith(".js")) {
+					path += ".js";
 				}
 			}
 		}
 
 		if (!File.separator.equals("/")) {
 			// convert to platform specific path
-			result.replaceAll("/", File.separator);
+			path.replaceAll("/", File.separator);
 		}
+
+		result += path;
 		return result;
 	}
 
