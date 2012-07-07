@@ -163,7 +163,7 @@ public class ContextInsensitiveInformationFlow {
 			int sourceOrigin = 0;
 			if(!IsFakeRoot)
 			{
-				sourceOrigin = PolicyChecker.isLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.getCGNodeOrigin(ir, method).toLowerCase());
+				sourceOrigin = PolicyChecker.isLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.getCGNodePosition(ir, method).toLowerCase());
 			}
 			ContextInsensitiveInformationFlow.functionOrigin.put(nodeName, sourceOrigin);
 			
@@ -176,7 +176,7 @@ public class ContextInsensitiveInformationFlow {
 				if(sNode_Method.getClass().getName().toString().equalsIgnoreCase(ToMaTo.CGNodeClassName))
 				{
 					calleeNodeSet.add(sNode);
-					functionOrigin.put(sNode_Method.getDeclaringClass().getName().toString(), PolicyChecker.isLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.getCGNodeOrigin(sNode_ir, sNode_Method).toLowerCase()));
+					functionOrigin.put(sNode_Method.getDeclaringClass().getName().toString(), PolicyChecker.isLibraryExternal(externalLibrarySet, edu.upenn.cis.tomato.util.Util.getCGNodePosition(sNode_ir, sNode_Method).toLowerCase()));
 				}
 			}
 			if(initialize_DEBUG_Output)

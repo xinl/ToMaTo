@@ -26,4 +26,12 @@ public class Position {
 	public int getEndOffset() {
 		return endOffset;
 	}
+	
+	public void setStartOffset(int startOffset) {
+		this.startOffset = startOffset;
+	}
+
+	public void setEndOffset(int endOffset) {
+		this.endOffset = endOffset;
+	}
 }

@@ -28,7 +28,7 @@ public class FunctionInvocation {
 		// TODO Add function parameter support for policy
 
 		String origin = "";
-		DebugUtil.DEBUG_PrintSeperationLine();
+		DebugUtil.printSeparationLine();
 	
 		// Iterate over All CG Nodes
 		for (CGNode node : cg) {
@@ -44,7 +44,7 @@ public class FunctionInvocation {
 				
 				// Get the origin of the CG node in question
 				IR ir = node.getIR();
-				origin = edu.upenn.cis.tomato.util.Util.getCGNodeOrigin(ir,method).toLowerCase();
+				// origin = edu.upenn.cis.tomato.util.Util.getCGNodePosition(ir,method).toLowerCase();
 				Iterator<CallSiteReference> iter_cs = ir.iterateCallSites();
 								
 				while(iter_cs.hasNext())

@@ -55,7 +55,7 @@ public class ObjectMemberInvocation {
 		JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(new WebPageLoaderFactory(new CAstRhinoTranslatorFactory(), null), sources, CGBuilderType.ZERO_ONE_CFA, AstIRFactory.makeDefaultFactory());
 		CallGraph cg = builder.makeCallGraph(builder.getOptions());
 		
-		DebugUtil.DEBUG_PrintSeperationLine();
+		DebugUtil.printSeparationLine();
 				
 		Iterator<CGNode> iter = cg.iterator();
 		while(iter.hasNext())
@@ -129,7 +129,7 @@ public class ObjectMemberInvocation {
 						}
 					}
 					
-					DebugUtil.DEBUG_PrintSeperationLine();
+					DebugUtil.printSeparationLine();
 				}
 			}	
 		}

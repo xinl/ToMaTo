@@ -2,16 +2,18 @@ package edu.upenn.cis.tomato.core;
 
 import java.util.Iterator;
 
+import com.ibm.wala.cast.js.html.IncludedPosition;
+import com.ibm.wala.cast.loader.AstMethod;
 import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ssa.IR;
+import com.ibm.wala.util.intset.IntIterator;
+import com.ibm.wala.util.intset.IntSet;
 
 import edu.upenn.cis.tomato.util.DebugUtil;
-import edu.upenn.cis.tomato.util.ErrorUtil;
-
 
 public class FunctionInvocationAnalyzer {
 
@@ -25,50 +27,52 @@ public class FunctionInvocationAnalyzer {
 		SuspectList<FunctionInvocationSuspect> sl = new SuspectList<FunctionInvocationSuspect>();
 		
 		// Iterate over All CG Nodes
-		for (CGNode node : cg) {
+		for (CGNode callerNode : cg) {
 			
-			IMethod method = node.getMethod();
-			String className = method.getClass().getName().toString();
-			String nodeName = method.getDeclaringClass().getName().toString();
+			IMethod callerMethod = callerNode.getMethod();
+			String callerClassName = callerMethod.getClass().getName().toString();
+			String callerNodeName = callerMethod.getDeclaringClass().getName().toString();
+			String callerFunctionName = edu.upenn.cis.tomato.util.Util.getCGNodeFunctionName(callerNodeName);
 			
-			boolean isFunctionDefinition = className.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
-			boolean isApplicationCode = !nodeName.startsWith(StaticAnalyzer.WALA_PROLOGUE) 
-										|| !nodeName.startsWith(StaticAnalyzer.WALA_PREAMBLE)
-										|| !nodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
+			boolean isFunctionDefinition = callerClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
+			boolean isApplicationCode = !callerNodeName.startsWith(StaticAnalyzer.WALA_PROLOGUE) 
+										|| !callerNodeName.startsWith(StaticAnalyzer.WALA_PREAMBLE)
+										|| !callerNodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
 			
 			if (isFunctionDefinition && isApplicationCode) {
 				
-				IR ir = node.getIR();
-				String origin = edu.upenn.cis.tomato.util.Util.getCGNodeOrigin(ir,method).toLowerCase();
-				Iterator<CallSiteReference> iter_cs = ir.iterateCallSites();
-								
-				while(iter_cs.hasNext())
-				{
-					CallSiteReference csr = iter_cs.next();
-					Iterator<CGNode> targets = cg.getPossibleTargets(node, csr).iterator();
-					while (targets.hasNext()) 
-					{
-						CGNode target = (CGNode) targets.next();
-						String[] functionNameArray = target.getMethod().getDeclaringClass().getName().toString().split("/");
-						String functionName = null;
-
-						// Parse out function name
-						if (functionNameArray != null
-								&& functionNameArray.length > 0) 
-						{
-							functionName = functionNameArray[functionNameArray.length - 1];
-						}
-						else 
-						{
-							ErrorUtil.printErrorMessage("Unexpected function name format.");
-						}				
+				IR callerIR = callerNode.getIR();
+				
+				Iterator<CallSiteReference> iter_csr = callerIR.iterateCallSites();			
+				while (iter_csr.hasNext()) {
+					
+					CallSiteReference csr = iter_csr.next();
+					Iterator<CGNode> targets = cg.getPossibleTargets(callerNode, csr).iterator();
+					while (targets.hasNext()) {
 						
+						CGNode calleeNode = (CGNode) targets.next();
+						IMethod calleeMethod = calleeNode.getMethod();
+						String calleeNodeName = calleeNode.getMethod().getDeclaringClass().getName().toString(); 
+						String calleeFunctionName = edu.upenn.cis.tomato.util.Util.getCGNodeFunctionName(calleeNodeName);
+						IR calleeIR = calleeNode.getIR();
+						Position calleePosition = edu.upenn.cis.tomato.util.Util.getCGNodePosition(calleeIR,calleeMethod);
+												
+						IntSet is = callerIR.getCallInstructionIndices(csr);
+						IntIterator iter_is = is.intIterator();
+						while (iter_is.hasNext()) {
+							int ssaIndex = iter_is.next();
+							IncludedPosition p = (IncludedPosition) ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
+							FunctionInvocationSuspect fis = new FunctionInvocationSuspect(
+									new Position(p.getURL(), p.getFirstOffset(), p.getLastOffset()),
+									calleePosition);
+							sl.add(fis);
+							fis.setAttribute("CallerName", callerFunctionName);
+							fis.setAttribute("CalleeName", calleeFunctionName);
+						}
 					}
 				}
 			}
 		}
-		
 		return sl;
-
 	}
 }

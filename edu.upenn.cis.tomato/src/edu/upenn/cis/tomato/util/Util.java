@@ -33,23 +33,55 @@ public class Util {
 		ToMaTo.systemBuiltinVariables.put("window", "DOMWindow this");
 		ToMaTo.reverseSystemBuiltinVariables.put("DOMWindow this", "window");
 	}
+	
+	public static String getCGNodeFunctionName(String declaringName)
+	{
+		String functionName = null;
+		String[] functionNameArray = declaringName.split("/");
+		
+		// Parse out function name
+		if (functionNameArray != null && functionNameArray.length > 0) {
+			functionName = functionNameArray[functionNameArray.length - 1];
+		} else {
+			ErrorUtil.printErrorMessage("Unexpected function name format.");
+		}
+		
+		return functionName;
+	}
+	
+	public static edu.upenn.cis.tomato.core.Position getCGNodePosition(IR ir, IMethod method) {
 
-	public static String getCGNodeOrigin(IR ir, IMethod method) {
-
+		edu.upenn.cis.tomato.core.Position pos = null;
 		SSAInstruction[] instructions = ir.getInstructions();
 		for (int i = 0; i < instructions.length; i++) {
+			
 			if (instructions[i] == null) {
 				continue;
 			}
 
-			Position pos = ((AstMethod) method).getSourcePosition(i);
-			if (pos != null) {
-				String[] result = pos.getURL().getFile().split("/");
-				return result[result.length - 1];
+			Position walaPos = ((AstMethod) method).getSourcePosition(i);
+			if (walaPos != null) {
+				
+				if(pos == null)
+				{
+					pos = new edu.upenn.cis.tomato.core.Position(walaPos.getURL(), walaPos.getFirstOffset(), walaPos.getLastOffset());
+				}
+				else
+				{
+					if(pos.getStartOffset() > walaPos.getFirstOffset())
+					{
+						pos.setStartOffset(walaPos.getFirstOffset());
+					}
+					
+					if(pos.getEndOffset() < walaPos.getLastLine())
+					{
+						pos.setEndOffset(walaPos.getLastOffset());
+					}
+				}
 			}
 		}
-
-		return null;
+				
+		return pos;
 	}
 
 	public static ArrayList<MethodReference> getSuccessorMethodReference(
@@ -204,7 +236,7 @@ public class Util {
 			CGNode node, String nodeName) {
 		boolean IsDebug = true;
 		if (IsDebug) {
-			DebugUtil.DEBUG_PrintSeperationLine();
+			DebugUtil.printSeparationLine();
 			DebugUtil
 					.DEBUG_PrintDebugMessage("Get Line Range for Member Method Definition for Function ["
 							+ nodeName + "]\n");
@@ -464,7 +496,7 @@ public class Util {
 
 	public static void printViolationSites(
 			HashMap<String, ArrayList<ViolationSite>> ViolationSites) {
-		DebugUtil.DEBUG_PrintSeperationLine();
+		DebugUtil.printSeparationLine();
 		DebugUtil
 				.DEBUG_PrintDebugMessage("ToMaTo violation sites interface with code instrumentation: \n");
 		Iterator<Entry<String, ArrayList<ViolationSite>>> iter = ViolationSites

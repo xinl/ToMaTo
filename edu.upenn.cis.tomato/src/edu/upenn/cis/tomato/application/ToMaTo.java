@@ -1,6 +1,5 @@
 package edu.upenn.cis.tomato.application;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -26,8 +25,7 @@ public class ToMaTo extends JSCallGraphBuilderUtil {
 	public static String systemPreambleName = "Lpreamble.js";
 	public static String systemPrologueName = "Lprologue.js";
 	public static String fakeRootNodeName = "LFakeRoot";
-	public static String violationSitePath = edu.upenn.cis.tomato.util.Util
-			.getViolationSitesFilePath();
+	public static String violationSitePath = edu.upenn.cis.tomato.util.Util.getViolationSitesFilePath();
 
 	public static String CGNodeClassName = "com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject";
 
@@ -49,8 +47,7 @@ public class ToMaTo extends JSCallGraphBuilderUtil {
 			// TestManager.TestBasicUI();
 			// TestManager.TestObjectMethodInvocation();
 		} catch (Exception e) {
-			ErrorUtil
-					.printErrorMessage("Unexpected error from WALA analysis library.");
+			ErrorUtil.printErrorMessage("Unexpected error from WALA analysis library.");
 			e.printStackTrace();
 		}
 	}

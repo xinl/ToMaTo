@@ -26,7 +26,7 @@ public class DebugUtil {
 		System.out.println(DebugPrompt + " " + msg);
 	}
 	
-	public static void DEBUG_PrintSeperationLine()
+	public static void printSeparationLine()
 	{	
 		System.out.println("\n===== ----------------------------------- =====");
 	}
