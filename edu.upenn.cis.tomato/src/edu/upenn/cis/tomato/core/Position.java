@@ -8,7 +8,9 @@ public class Position {
 	private int endOffset;
 
 	public Position(URL url, int startOffset, int endOffset) {
-
+		this.url = url;
+		this.startOffset = startOffset;
+		this.endOffset = endOffset;
 	}
 
 	public URL getURL() {
@@ -33,5 +35,13 @@ public class Position {
 
 	public void setEndOffset(int endOffset) {
 		this.endOffset = endOffset;
+	}
+
+	@Override
+	public String toString() {
+		if (url != null) {
+			return "[URL] " + this.getURLString() + " [Offset] " + this.startOffset + " - " + this.endOffset;
+		} else
+			return null;
 	}
 }

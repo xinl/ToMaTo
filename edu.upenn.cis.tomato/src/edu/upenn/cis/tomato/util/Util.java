@@ -54,33 +54,26 @@ public class Util {
 		edu.upenn.cis.tomato.core.Position pos = null;
 		SSAInstruction[] instructions = ir.getInstructions();
 		for (int i = 0; i < instructions.length; i++) {
-			
+
 			if (instructions[i] == null) {
 				continue;
 			}
 
 			Position walaPos = ((AstMethod) method).getSourcePosition(i);
 			if (walaPos != null) {
-				
-				if(pos == null)
-				{
+
+				if (pos == null) {
 					pos = new edu.upenn.cis.tomato.core.Position(walaPos.getURL(), walaPos.getFirstOffset(), walaPos.getLastOffset());
-				}
-				else
-				{
-					if(pos.getStartOffset() > walaPos.getFirstOffset())
-					{
+				} else {
+					if (pos.getStartOffset() > walaPos.getFirstOffset()) {
 						pos.setStartOffset(walaPos.getFirstOffset());
 					}
-					
-					if(pos.getEndOffset() < walaPos.getLastLine())
-					{
+					if (pos.getEndOffset() < walaPos.getLastLine()) {
 						pos.setEndOffset(walaPos.getLastOffset());
 					}
 				}
 			}
 		}
-				
 		return pos;
 	}
 

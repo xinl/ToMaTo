@@ -2,8 +2,8 @@ package edu.upenn.cis.tomato.core;
 
 import java.util.Iterator;
 
-import com.ibm.wala.cast.js.html.IncludedPosition;
 import com.ibm.wala.cast.loader.AstMethod;
+import com.ibm.wala.cast.tree.CAstSourcePositionMap;
 import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -19,11 +19,7 @@ public class FunctionInvocationAnalyzer {
 
 	public static boolean DEBUG = true;
 	public static SuspectList<FunctionInvocationSuspect> getAllSuspects(CallGraph cg, PointerAnalysis pa) {
-		
-		if (DEBUG) {
-			DebugUtil.printSeparationLine();
-		}
-	
+			
 		SuspectList<FunctionInvocationSuspect> sl = new SuspectList<FunctionInvocationSuspect>();
 		
 		// Iterate over All CG Nodes
@@ -36,10 +32,15 @@ public class FunctionInvocationAnalyzer {
 			
 			boolean isFunctionDefinition = callerClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
 			boolean isApplicationCode = !callerNodeName.startsWith(StaticAnalyzer.WALA_PROLOGUE) 
-										|| !callerNodeName.startsWith(StaticAnalyzer.WALA_PREAMBLE)
-										|| !callerNodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
+										&& !callerNodeName.startsWith(StaticAnalyzer.WALA_PREAMBLE)
+										&& !callerNodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
 			
 			if (isFunctionDefinition && isApplicationCode) {
+				
+				if (DEBUG) {
+					DebugUtil.printSeparationLine();
+					DebugUtil.DEBUG_PrintDebugMessage("[Caller Function]\t" + callerFunctionName);
+				}
 				
 				IR callerIR = callerNode.getIR();
 				
@@ -52,8 +53,14 @@ public class FunctionInvocationAnalyzer {
 						
 						CGNode calleeNode = (CGNode) targets.next();
 						IMethod calleeMethod = calleeNode.getMethod();
+						String calleeClassName = calleeMethod.getClass().getName().toString();
 						String calleeNodeName = calleeNode.getMethod().getDeclaringClass().getName().toString(); 
 						String calleeFunctionName = edu.upenn.cis.tomato.util.Util.getCGNodeFunctionName(calleeNodeName);
+						isFunctionDefinition = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
+						if(!isFunctionDefinition){
+							continue;
+						}
+						
 						IR calleeIR = calleeNode.getIR();
 						Position calleePosition = edu.upenn.cis.tomato.util.Util.getCGNodePosition(calleeIR,calleeMethod);
 												
@@ -61,13 +68,20 @@ public class FunctionInvocationAnalyzer {
 						IntIterator iter_is = is.intIterator();
 						while (iter_is.hasNext()) {
 							int ssaIndex = iter_is.next();
-							IncludedPosition p = (IncludedPosition) ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
-							FunctionInvocationSuspect fis = new FunctionInvocationSuspect(
-									new Position(p.getURL(), p.getFirstOffset(), p.getLastOffset()),
-									calleePosition);
-							sl.add(fis);
-							fis.setAttribute("CallerName", callerFunctionName);
-							fis.setAttribute("CalleeName", calleeFunctionName);
+							CAstSourcePositionMap.Position p = ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
+							if(p!=null){
+								FunctionInvocationSuspect fis = new FunctionInvocationSuspect(
+										new Position(p.getURL(), p.getFirstOffset(), p.getLastOffset()),
+										calleePosition);
+								sl.add(fis);
+								fis.setAttribute("CallerName", callerFunctionName);
+								fis.setAttribute("CalleeName", calleeFunctionName);
+								
+								if (DEBUG) {
+									DebugUtil.DEBUG_PrintDebugMessage("[Created Function Invocation Suspect]\t" + calleeFunctionName);
+									System.out.println(fis.toString());
+								}
+							}
 						}
 					}
 				}

@@ -36,6 +36,7 @@ public class ToMaTo extends JSCallGraphBuilderUtil {
 			IllegalArgumentException, IOException, CancelException {
 
 		try {
+			
 			TestManager.testFunctionInvocation();
 			// TestManager.TestAliasAnalysis("system");
 			// TestManager.TestAliasAnalysis("global");
