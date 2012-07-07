@@ -11,7 +11,11 @@ public class PolicyAction {
 
 	@Override
 	public String toString() {
-		return "" + type.toString() + "(\"" + content + "\")";
+		if (content != null) {
+			return "" + type + "(\"" + content + "\")";
+		} else {
+			return "" + type;
+		}
 	}
 
 	public enum ActionType {
@@ -23,9 +27,9 @@ public class PolicyAction {
 		ActionType(String string) {
 			this.string = string;
 		}
-		
+
 		public static ActionType strToType(String str) {
-			for(ActionType type : ActionType.values()) {
+			for (ActionType type : ActionType.values()) {
 				if (str.equals(type.toString())) {
 					return type;
 				}

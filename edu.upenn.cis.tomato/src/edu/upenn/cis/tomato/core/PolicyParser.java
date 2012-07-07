@@ -1,6 +1,7 @@
 package edu.upenn.cis.tomato.core;
 
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Matcher;
@@ -9,20 +10,45 @@ import java.util.regex.Pattern;
 import edu.upenn.cis.tomato.core.PolicyNode.NodeType;
 import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
 
+/**
+ * A Parser for converting policy string into a binary tree of PolicyNodes.
+ * 
+ * Policy string grammar:
+ * 
+ * <pre>
+ * <policy> := <disjunction> ":" <action>
+ * 
+ * <disjunction> := <conjunction> {"|" <disjunction>}
+ * <conjunction> := <negation> {"&" <conjunction>}
+ * <negation> := <atom> | "!" <negation>
+ * <atom> := "(" <disjunction> ")" | <term>
+ * 
+ * <term> := <name> <comparator> <value>
+ * <comparator> := "=" | "!=" | ">" | "<" | ">=" | "<="
+ * <value> := <float> | <integer> | <string>
+ * 
+ * <action> := <name> {"(" <value> ")"}
+ * </pre>
+ * 
+ * Priority of logic operators: ! > & > |
+ * 
+ * @author Xin Li
+ * 
+ */
 public class PolicyParser {
 	protected String input;
 	protected PolicyNode root;
 	protected Stack<PolicyNode> stack = new Stack<PolicyNode>();
 	protected int cursor;
-	protected Map<TokenType, Matcher> matchers;
-	
+	protected Map<TokenType, Matcher> matchers = new HashMap<TokenType, Matcher>();
+
 	public PolicyParser(String input) {
 		this.input = input;
 		for (TokenType type : TokenType.values()) {
 			matchers.put(type, type.getPattern().matcher(input));
 		}
 	}
-	
+
 	public PolicyNode getPolicyTree() throws ParseException {
 		parsePolicy();
 		return stack.pop();
@@ -33,11 +59,10 @@ public class PolicyParser {
 		stack.clear();
 		root = null;
 	}
-	
-	
+
 	protected void parsePolicy() throws ParseException {
 		reset();
-		parseTermClause();
+		parseDisjunction();
 		consumeToken(TokenType.ROOT);
 		parseAction();
 		skipWhiteSpace();
@@ -46,38 +71,71 @@ public class PolicyParser {
 		}
 		makeBinaryTree();
 	}
+
+	protected void parseDisjunction() throws ParseException {
+		skipWhiteSpace();
+		parseConjunction();
+		skipWhiteSpace();
+		if (peekToken(TokenType.OR)) {
+			consumeToken(TokenType.OR);
+			parseDisjunction();
+			makeBinaryTree();
+		}
+	}
 	
-	protected void parseTermClause() throws ParseException {
+	protected void parseConjunction() throws ParseException {
+		skipWhiteSpace();
+		parseNegation();
+		skipWhiteSpace();
+		if (peekToken(TokenType.AND)) {
+			consumeToken(TokenType.AND);
+			parseConjunction();
+			makeBinaryTree();
+		}
+	}
+	
+	protected void parseNegation() throws ParseException {
+		skipWhiteSpace();
 		if (peekToken(TokenType.NOT)) {
 			consumeToken(TokenType.NOT);
-			parseTermClause();
+			parseNegation();
 			makeUnaryTree();
-		} else if (peekToken(TokenType.LEFT_PAREN)) {
+		} else {
+			parseAtom();
+		}
+	}
+
+	protected void parseAtom() throws ParseException {
+		skipWhiteSpace();
+		if (peekToken(TokenType.LEFT_PAREN)) {
 			skipToken(TokenType.LEFT_PAREN);
-			parseTermClause();
-			skipToken(TokenType.RIGHT_PAREN);
+			parseDisjunction();
+			if (peekToken(TokenType.RIGHT_PAREN)) {
+				skipToken(TokenType.RIGHT_PAREN);
+			} else {
+				error("Unclosed parenthesis.");
+			}
 		} else {
 			parseTerm();
 		}
-		
-		if (peekToken(TokenType.AND)) {
-			consumeToken(TokenType.AND);
-			parseTermClause();
-			makeBinaryTree();
-		} else if (peekToken(TokenType.OR)) {
-			consumeToken(TokenType.OR);
-			parseTermClause();
-			makeBinaryTree();
-		}
 	}
-	
+
 	protected void parseTerm() throws ParseException {
-		PolicyTerm term = new PolicyTerm(parseName(), parseComparator(), parseValue());
+		PolicyTerm term = null;
+		String name = parseName();
+		ComparatorType comp = parseComparator();
+		Object value = parseValue();
+		try {
+			term = new PolicyTerm(name, comp, value);
+		} catch (IllegalArgumentException e) {
+			error("Illegal term format: " + name);
+		}
 		PolicyNode node = new PolicyNode(PolicyNode.NodeType.TERM, term);
 		stack.push(node);
 	}
-	
+
 	protected ComparatorType parseComparator() throws ParseException {
+		skipWhiteSpace();
 		Matcher matcher = getMatcher(TokenType.COMPARATOR);
 		if (matcher.lookingAt()) {
 			for (ComparatorType type : ComparatorType.values()) {
@@ -89,65 +147,76 @@ public class PolicyParser {
 			// we shouldn't reach this point, unless TokenType.COMPARATOR doesn't match ComparatorType
 			error("Invalid comparator: " + matcher.group());
 		} else {
-			error("Can't find expected comparator token.");
+			error("Can't find expected comparator token at " + cursor);
 		}
 		return null;
 	}
-	
+
 	protected String parseName() throws ParseException {
+		skipWhiteSpace();
 		Matcher matcher = getMatcher(TokenType.NAME);
 		if (matcher.lookingAt()) {
 			cursor = matcher.end();
 			return matcher.group();
 		} else {
-			error("Can't find expected name token.");
+			error("Can't find expected name token at " + cursor);
 		}
 		return null;
 	}
-	
-	private Object parseValue() throws ParseException {
+
+	protected Object parseValue() throws ParseException {
+		skipWhiteSpace();
 		Matcher integerMatcher = getMatcher(TokenType.INTEGER);
 		Matcher floatMatcher = getMatcher(TokenType.FLOAT);
 		Matcher stringMatcher = getMatcher(TokenType.STRING);
-		if (integerMatcher.lookingAt()) {
+		if (floatMatcher.lookingAt()) {
+			cursor = floatMatcher.end();
+			return Float.valueOf(floatMatcher.group());
+		} else if (integerMatcher.lookingAt()) {
 			cursor = integerMatcher.end();
 			return Integer.valueOf(integerMatcher.group());
-		} else if (floatMatcher.lookingAt()) {
-			cursor = floatMatcher.end();
-			return Float.valueOf(integerMatcher.group());
 		} else if (stringMatcher.lookingAt()) {
 			cursor = stringMatcher.end();
 			return stringMatcher.group(1); // without surrounding quotes
 		} else {
-			error("Can't find expected value token.");
+			error("Can't find a valid value token.");
 		}
-		
+
 		return null;
 	}
-	
+
 	protected void parseAction() throws ParseException {
+		skipWhiteSpace();
 		PolicyAction.ActionType type = PolicyAction.ActionType.strToType(parseName());
+		if (type == null) {
+			error("Invalid action name.");
+		}
 		String content = null;
 		if (peekToken(TokenType.LEFT_PAREN)) {
 			skipToken(TokenType.LEFT_PAREN);
-			content = (String) parseValue();
+			Object value = parseValue();
+			if (!(value instanceof String)) {
+				error("Parameter of action must be a string");
+			}
+			content = (String) value;
 			skipToken(TokenType.RIGHT_PAREN);
 		}
 		PolicyAction action = new PolicyAction(type, content);
 		PolicyNode node = new PolicyNode(PolicyNode.NodeType.ACTION, action);
 		stack.push(node);
 	}
-	
+
 	protected void skipWhiteSpace() {
 		skipToken(TokenType.WHITESPACE);
 	}
-	
+
 	protected boolean peekToken(TokenType type) {
 		Matcher matcher = getMatcher(type);
 		return matcher.lookingAt();
 	}
-	
+
 	protected void consumeToken(TokenType type) throws ParseException {
+		skipWhiteSpace();
 		Matcher matcher = getMatcher(type);
 		if (matcher.lookingAt()) {
 			matcher.group();
@@ -170,23 +239,23 @@ public class PolicyParser {
 			}
 			cursor = matcher.end();
 		} else {
-			error("Can't find expected token of type: " + type.name());
+			error("Can't find expected token of type: " + type.name() + " at " + cursor);
 		}
 	}
-	
+
 	protected void skipToken(TokenType type) {
 		Matcher matcher = getMatcher(type);
 		if (matcher.lookingAt()) {
 			cursor = matcher.end();
 		}
 	}
-	
+
 	protected Matcher getMatcher(TokenType type) {
 		Matcher matcher = matchers.get(type);
 		matcher.region(cursor, input.length());
 		return matcher;
 	}
-	
+
 	protected void makeBinaryTree() {
 		PolicyNode right = stack.pop();
 		PolicyNode parent = stack.pop();
@@ -195,18 +264,18 @@ public class PolicyParser {
 		parent.setRight(right);
 		stack.push(parent);
 	}
-	
+
 	protected void makeUnaryTree() {
 		PolicyNode left = stack.pop();
 		PolicyNode parent = stack.pop();
 		parent.setLeft(left);
 		stack.push(parent);
 	}
-	
+
 	protected void error(String reason) throws ParseException {
 		throw new ParseException(reason, cursor);
 	}
-	
+
 	public enum TokenType {
 		ROOT		(":"),
 		AND			("&"),
@@ -215,18 +284,18 @@ public class PolicyParser {
 		NAME		("[a-zA-Z_][\\w\\.]*"),
 		COMPARATOR	("(?:[!><]=)|[=<>]"),
 		STRING		("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using \ (Friedl's: "unrolling-the-loop" technique)
-		INTEGER		("\\d+"),
-		FLOAT		("d+\\.d+"),
-		LEFT_PAREN 	("\\("),
-		RIGHT_PAREN ("\\)"),
+		INTEGER		("-?\\d+"),
+		FLOAT		("-?\\d+\\.\\d+"),
+		LEFT_PAREN	("\\("),
+		RIGHT_PAREN	("\\)"),
 		WHITESPACE	("\\s+");
-		
+
 		private final Pattern pattern;
-		
+
 		TokenType(String string) {
 			this.pattern = Pattern.compile(string);
 		}
-		
+
 		public Pattern getPattern() {
 			return pattern;
 		}
