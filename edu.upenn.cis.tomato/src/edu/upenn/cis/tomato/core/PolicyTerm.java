@@ -9,24 +9,29 @@ public class PolicyTerm {
 	protected String propertyName;
 	protected ComparatorType comparator;
 	protected Object value;
-	private final static Set<String> STATIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(	"ActionType",
-																								"CallerName",
-																								"CallerURL",
-																								"CallerStartOffset",
-																								"CallerEndOffset",
-																								"CalleeName",
-																								"CalleeURL",
-																								"CalleeStartOffset",
-																								"CalleeEndOffset"));
+	private final static Set<String> STATIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(
+			"ActionType",
+			"CallerName",
+			"CallerURL",
+			"CallerStartOffset",
+			"CallerEndOffset",
+			"CalleeName",
+			"CalleeURL",
+			"CalleeStartOffset",
+			"CalleeEndOffset"));
+	private final static Set<String> DYNAMIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(
+			"TimeInvoked"));
 
-	public PolicyTerm(String propertyName, ComparatorType comparator, Object value) {
+	public PolicyTerm(String propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
 		this.propertyName = propertyName;
 		this.comparator = comparator;
 		this.value = value;
 		if (STATIC_PROPERTY_NAMES.contains(propertyName)) {
 			this.type = TermType.STATIC;
-		} else {
+		} else if (DYNAMIC_PROPERTY_NAMES.contains(propertyName)) {
 			this.type = TermType.DYNAMIC;
+		} else {
+			throw new IllegalArgumentException("Illegal property name.");
 		}
 	}
 	
