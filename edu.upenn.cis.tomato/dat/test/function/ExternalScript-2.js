@@ -10,7 +10,7 @@ function innerAlert2()
  	var z = 2; 
  	alert(z);
  	eval();
- 	addition(5,9);
+ 	addition(5,9,0);
  	substraction(1,3);
  	addition(10,12);
  	calculator.multiply(2, 3);

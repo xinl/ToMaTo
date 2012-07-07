@@ -40,7 +40,7 @@ public class Position {
 	@Override
 	public String toString() {
 		if (url != null) {
-			return "[URL] " + this.getURLString() + " [Offset] " + this.startOffset + " - " + this.endOffset;
+			return "[URL] " + this.getURLString() + "\t[Offset] " + this.startOffset + " - " + this.endOffset;
 		} else
 			return null;
 	}

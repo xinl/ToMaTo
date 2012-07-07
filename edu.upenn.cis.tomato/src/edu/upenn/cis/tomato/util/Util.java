@@ -33,50 +33,7 @@ public class Util {
 		ToMaTo.systemBuiltinVariables.put("window", "DOMWindow this");
 		ToMaTo.reverseSystemBuiltinVariables.put("DOMWindow this", "window");
 	}
-	
-	public static String getCGNodeFunctionName(String declaringName)
-	{
-		String functionName = null;
-		String[] functionNameArray = declaringName.split("/");
 		
-		// Parse out function name
-		if (functionNameArray != null && functionNameArray.length > 0) {
-			functionName = functionNameArray[functionNameArray.length - 1];
-		} else {
-			ErrorUtil.printErrorMessage("Unexpected function name format.");
-		}
-		
-		return functionName;
-	}
-	
-	public static edu.upenn.cis.tomato.core.Position getCGNodePosition(IR ir, IMethod method) {
-
-		edu.upenn.cis.tomato.core.Position pos = null;
-		SSAInstruction[] instructions = ir.getInstructions();
-		for (int i = 0; i < instructions.length; i++) {
-
-			if (instructions[i] == null) {
-				continue;
-			}
-
-			Position walaPos = ((AstMethod) method).getSourcePosition(i);
-			if (walaPos != null) {
-
-				if (pos == null) {
-					pos = new edu.upenn.cis.tomato.core.Position(walaPos.getURL(), walaPos.getFirstOffset(), walaPos.getLastOffset());
-				} else {
-					if (pos.getStartOffset() > walaPos.getFirstOffset()) {
-						pos.setStartOffset(walaPos.getFirstOffset());
-					}
-					if (pos.getEndOffset() < walaPos.getLastLine()) {
-						pos.setEndOffset(walaPos.getLastOffset());
-					}
-				}
-			}
-		}
-		return pos;
-	}
-
 	public static ArrayList<MethodReference> getSuccessorMethodReference(
 			CallGraph cg, CGNode node) {
 		ArrayList<MethodReference> MRS = new ArrayList<MethodReference>();

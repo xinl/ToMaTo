@@ -20,12 +20,13 @@ import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 
 import edu.upenn.cis.tomato.core.FunctionInvocationAnalyzer;
+import edu.upenn.cis.tomato.core.StaticAnalyzer;
 
 
 public class FunctionInvocationAnalyzerTest {
 	
 	@Test
-	public void testAnalyzer() throws Exception {
+	public void testBasicAnalyzer() throws Exception {
 		
 		String mashupURL = (new File("").getAbsolutePath()+"/dat/test/function/BasicFunctionInvocation.html").replace("/", File.separator);
 		if (File.separator.equals("\\")) {
@@ -47,6 +48,7 @@ public class FunctionInvocationAnalyzerTest {
         CallGraph cg = builder.makeCallGraph(builder.getOptions());
         PointerAnalysis pa = builder.getPointerAnalysis();
         
-        FunctionInvocationAnalyzer.getAllSuspects(cg, pa);
+        StaticAnalyzer sa = new StaticAnalyzer(cg, pa);
+        FunctionInvocationAnalyzer.getAllSuspects(sa);
 	}
 }
