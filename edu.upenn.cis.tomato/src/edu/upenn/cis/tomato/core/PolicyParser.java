@@ -27,7 +27,7 @@ import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
  * <comparator> := "=" | "!=" | ">" | "<" | ">=" | "<="
  * <value> := <float> | <integer> | <string>
  * 
- * <action> := <name> {"(" <value> ")"}
+ * <action> := <name> {"(" <string> ")"}
  * </pre>
  * 
  * Priority of logic operators: ! > & > |

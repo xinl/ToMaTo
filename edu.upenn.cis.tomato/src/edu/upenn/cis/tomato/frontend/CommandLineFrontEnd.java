@@ -20,7 +20,7 @@ public class CommandLineFrontEnd {
 		SourceBundle src;
 		try {
 			src = new SourceBundle(entryPoint);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.out.println("Error reading source files.\n");
 			e.printStackTrace();
 			return;

@@ -71,6 +71,10 @@ public class SourceBundle {
 		SourceBundleSourceExtractor extractor = new SourceBundleSourceExtractor();
 		this.sourceModules = extractor.extractSources(entryPointURI, new JerichoHtmlParser());
 	}
+	
+	public SourceBundle(String entryPointURIString) throws URISyntaxException, InvalidParameterException, IOException {
+		this(new URI(entryPointURIString));
+	}
 
 	private URI getBaseURI(URI uri) {
 		String path = uri.getPath();
