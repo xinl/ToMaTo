@@ -7,7 +7,11 @@ function substraction(f, g)
 
 function innerAlert2() 
 {
- 	var z = 2; 
+ 	var z = 2;
+ 	var o =new Object();
+ 	o.func = eval;
+ 	o.func();
+ 	
  	alert(z);
  	eval();
  	addition(5,9,0);

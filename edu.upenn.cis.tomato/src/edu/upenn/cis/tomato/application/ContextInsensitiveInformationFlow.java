@@ -198,7 +198,7 @@ public class ContextInsensitiveInformationFlow {
 			edu.upenn.cis.tomato.util.Util.getLocalVariableNameMapping(node, nodeName, method, true, variableSet);
 			if(initialize_DEBUG_Output)
 			{
-				DebugUtil.DEBUG_PrintDefinedAndUsed(node);
+				DebugUtil.printCGNodeDefinedAndUsed(node);
 			}
 			
 			// Process Phi Node

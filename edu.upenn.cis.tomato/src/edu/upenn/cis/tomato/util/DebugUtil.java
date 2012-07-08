@@ -21,7 +21,7 @@ public class DebugUtil {
 	
 	public static final String DebugPrompt = "[ToMaTo System Debug]";
 	
-	public static void DEBUG_PrintDebugMessage(String msg)
+	public static void printDebugMessage(String msg)
 	{	
 		System.out.println(DebugPrompt + " " + msg);
 	}
@@ -81,7 +81,7 @@ public class DebugUtil {
 		System.out.print(result);
 	}
 	
-	public static void DEBUG_PrintDefinedAndUsed (CGNode node)
+	public static void printCGNodeDefinedAndUsed (CGNode node)
 	{
 		if(node == null)
 		{
@@ -99,7 +99,7 @@ public class DebugUtil {
 				continue;
 			}
 			
-			System.out.print(DebugPrompt + " SSA Instruction [" + i + "][" + ssai[i].toString() + "]" );
+			System.out.print(DebugPrompt + "[" + ssai[i].getClass() + "] [" + i + "][" + ssai[i].toString() + "]" );
 			
 			for(int j=0; j<ssai[i].getNumberOfDefs(); j++)
 			{
@@ -127,12 +127,14 @@ public class DebugUtil {
 			
 			System.out.println("");
 		}
+		
+		System.out.println("");
 	}
 	
 	public static void DEBUG_PrintFunctionRangeList(ArrayList<ObjectMembers> frl, String listName)
 	{
 		System.out.println("\n===== ----------------------------------- =====");
-		DEBUG_PrintDebugMessage("Function Range List [ " + listName+ " ]");
+		printDebugMessage("Function Range List [ " + listName+ " ]");
 		System.out.println("===== ----------------------------------- =====");
 		for(ObjectMembers member:frl)
 		{

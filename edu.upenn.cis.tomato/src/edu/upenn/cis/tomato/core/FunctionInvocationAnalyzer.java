@@ -43,7 +43,8 @@ public class FunctionInvocationAnalyzer {
 				
 				if (DEBUG) {
 					DebugUtil.printSeparationLine();
-					DebugUtil.DEBUG_PrintDebugMessage("[Caller Function]\t" + callerFunctionName);
+					DebugUtil.printDebugMessage("[Caller Function]\t" + callerFunctionName);
+					DebugUtil.printCGNodeDefinedAndUsed(callerNode);
 				}
 				
 				IR callerIR = callerNode.getIR();
@@ -62,9 +63,15 @@ public class FunctionInvocationAnalyzer {
 						String calleeNodeName = calleeNode.getMethod().getDeclaringClass().getName().toString(); 
 						String calleeFunctionName = getCGNodeFunctionName(calleeNodeName);
 						isFunctionDefinition = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
-						if(!isFunctionDefinition){
+						boolean isConstructor = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.ipa.callgraph.JavaScriptConstructTargetSelector$JavaScriptConstructor");
+						
+						if(isConstructor)
+						{
+							//TODO: Need to fill-in corresponding code;
 							continue;
 						}
+						
+						//TODO: Need to handle the dispatch case;
 						
 						IR calleeIR = calleeNode.getIR();
 						SSAInstruction[] callerInstructions = callerIR.getInstructions();
@@ -78,7 +85,7 @@ public class FunctionInvocationAnalyzer {
 							int argCount = instruction.getNumberOfParameters() - 2;
 							
 							//TODO: Should look into this to see why sometimes the var name is null or in strange format
-							// System.out.println(variableNameMapping.get(instruction.getFunction()));
+							System.out.println(variableNameMapping.get(instruction.getFunction()));
 														
 							CAstSourcePositionMap.Position p = ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
 							if(p!=null){
@@ -91,7 +98,7 @@ public class FunctionInvocationAnalyzer {
 								fis.setAttribute("ArgumentCount", argCount);
 								
 								if (DEBUG) {
-									DebugUtil.DEBUG_PrintDebugMessage("[Created Function Invocation Suspect]\t" + calleeFunctionName);
+									DebugUtil.printDebugMessage("[Created Function Invocation Suspect]\t" + calleeFunctionName);
 									System.out.println(fis.toString());
 								}
 							}

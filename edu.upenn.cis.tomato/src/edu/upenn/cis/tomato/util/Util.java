@@ -188,7 +188,7 @@ public class Util {
 		if (IsDebug) {
 			DebugUtil.printSeparationLine();
 			DebugUtil
-					.DEBUG_PrintDebugMessage("Get Line Range for Member Method Definition for Function ["
+					.printDebugMessage("Get Line Range for Member Method Definition for Function ["
 							+ nodeName + "]\n");
 		}
 
@@ -234,8 +234,8 @@ public class Util {
 					pdef = instruction.getDef();
 					if (IsDebug) {
 						DebugUtil
-								.DEBUG_PrintDebugMessage("Get function constructor.");
-						DebugUtil.DEBUG_PrintDebugMessage("Define variable v"
+								.printDebugMessage("Get function constructor.");
+						DebugUtil.printDebugMessage("Define variable v"
 								+ pdef);
 					}
 
@@ -248,7 +248,7 @@ public class Util {
 							location = pos1.getURL().toString();
 							if (IsDebug) {
 								DebugUtil
-										.DEBUG_PrintDebugMessage("Position @line ["
+										.printDebugMessage("Position @line ["
 												+ pos1.getFirstLine() + "]");
 							}
 						}
@@ -266,7 +266,7 @@ public class Util {
 						def = instruction.getDef();
 						if (IsDebug) {
 							DebugUtil
-									.DEBUG_PrintDebugMessage("Match function constructor variable v"
+									.printDebugMessage("Match function constructor variable v"
 											+ puse);
 						}
 
@@ -278,7 +278,7 @@ public class Util {
 								memberRange.add(pos2.getFirstLine());
 								if (IsDebug) {
 									DebugUtil
-											.DEBUG_PrintDebugMessage("Position @line ["
+											.printDebugMessage("Position @line ["
 													+ pos2.getFirstLine() + "]");
 								}
 							}
@@ -298,7 +298,7 @@ public class Util {
 					if (def == use) {
 						if (IsDebug) {
 							DebugUtil
-									.DEBUG_PrintDebugMessage("Match function name variable v"
+									.printDebugMessage("Match function name variable v"
 											+ use);
 						}
 
@@ -310,7 +310,7 @@ public class Util {
 								memberRange.add(pos3.getFirstLine());
 								if (IsDebug) {
 									DebugUtil
-											.DEBUG_PrintDebugMessage("Position @line ["
+											.printDebugMessage("Position @line ["
 													+ pos3.getFirstLine() + "]");
 								}
 							}
@@ -325,7 +325,7 @@ public class Util {
 								memberName = tokens[2].trim();
 								if (IsDebug) {
 									DebugUtil
-											.DEBUG_PrintDebugMessage("Get member function name ["
+											.printDebugMessage("Get member function name ["
 													+ memberName + "].");
 								}
 							}
@@ -354,7 +354,7 @@ public class Util {
 						memberRange.add(pos.getFirstLine());
 						if (IsDebug) {
 							DebugUtil
-									.DEBUG_PrintDebugMessage("Over Approximation Position @line ["
+									.printDebugMessage("Over Approximation Position @line ["
 											+ pos.getFirstLine() + "]");
 						}
 					}
@@ -448,13 +448,13 @@ public class Util {
 			HashMap<String, ArrayList<ViolationSite>> ViolationSites) {
 		DebugUtil.printSeparationLine();
 		DebugUtil
-				.DEBUG_PrintDebugMessage("ToMaTo violation sites interface with code instrumentation: \n");
+				.printDebugMessage("ToMaTo violation sites interface with code instrumentation: \n");
 		Iterator<Entry<String, ArrayList<ViolationSite>>> iter = ViolationSites
 				.entrySet().iterator();
 		while (iter.hasNext()) {
 			Entry<String, ArrayList<ViolationSite>> e = iter.next();
 			String URL = e.getKey();
-			DebugUtil.DEBUG_PrintDebugMessage("[External Library] " + URL);
+			DebugUtil.printDebugMessage("[External Library] " + URL);
 			ArrayList<ViolationSite> vs = e.getValue();
 			for (int i = 0; i < vs.size(); i++) {
 				vs.get(i).printViolationSite();

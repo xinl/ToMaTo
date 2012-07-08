@@ -91,7 +91,7 @@ public class AliasAnalysis {
 				{
 					if(DEBUG_ALIAS_ANALYSIS)
 					{
-						DebugUtil.DEBUG_PrintDefinedAndUsed(node);
+						DebugUtil.printCGNodeDefinedAndUsed(node);
 					}
 					
 					Iterator<Entry<Integer, String>> iter_lvnm = LocalVariableNameMap.entrySet().iterator();
@@ -116,7 +116,7 @@ public class AliasAnalysis {
 				{
 					if(DEBUG_ALIAS_ANALYSIS)
 					{
-						DebugUtil.DEBUG_PrintDefinedAndUsed(node);
+						DebugUtil.printCGNodeDefinedAndUsed(node);
 					}
 					
 					Iterator<Entry<Integer, String>> iter_lvnm = LocalVariableNameMap.entrySet().iterator();

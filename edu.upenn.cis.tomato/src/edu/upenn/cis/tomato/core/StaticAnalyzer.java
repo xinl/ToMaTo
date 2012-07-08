@@ -4,8 +4,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.ibm.wala.cast.ir.ssa.AstGlobalRead;
-import com.ibm.wala.cast.ir.ssa.AstIRFactory;
+import com.ibm.wala.cast.ir.ssa.*;
+import com.ibm.wala.cast.ir.ssa.AstLexicalAccess.Access;
 import com.ibm.wala.cast.js.html.MappedSourceModule;
 import com.ibm.wala.cast.js.html.WebPageLoaderFactory;
 import com.ibm.wala.cast.js.ipa.callgraph.JSCFABuilder;
@@ -20,7 +20,7 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.SSAInstruction;
 
-import edu.upenn.cis.tomato.application.ToMaTo;
+import edu.upenn.cis.tomato.util.ErrorUtil;
 
 public class StaticAnalyzer {
 	private SourceBundle sourceBundle;
@@ -102,12 +102,7 @@ public class StaticAnalyzer {
 			if (ssai[i] == null) {
 				continue;
 			}
-			
-			// filter out declaration IRs. Or else all variables will become aliases.
-			/*if ((ssai[i] instanceof AstGlobalRead) && ((AstGlobalRead) ssai[i]).getGlobalName().equals("global $$undefined")) {
-				 continue;
-			}*/
-
+						
 			for (int j = 0; j < ssai[i].getNumberOfDefs(); j++) {
 				int def_vn = ssai[i].getDef(j);
 				String[] ln = ir.getLocalNames(i, def_vn);
@@ -138,6 +133,36 @@ public class StaticAnalyzer {
 						} else {
 							nodeVariableNameMapping.put(use_vn, ln[k]);
 						}
+					}
+				}
+			}
+			
+			if(ssai[i] instanceof AstGlobalRead){		
+				int def_vn = ((AstGlobalRead) ssai[i]).getDef();
+				String[] gn = ((AstGlobalRead) ssai[i]).getGlobalName().split(" ");
+				if (gn.length == 2) {
+					String scope = gn[0];
+					String ln = gn[1];
+					if (includeScope) {
+						nodeVariableNameMapping.put(def_vn, ln + "@" + scope);
+					} else {
+						nodeVariableNameMapping.put(def_vn, ln);
+					}
+				} else {
+					ErrorUtil.printErrorMessage("Failed to parse AstGlobalRead instruction.");
+				}
+			}else if(ssai[i] instanceof AstLexicalRead){
+				
+				Access[] access = ((AstLexicalRead) ssai[i]).getAccesses();
+				for(int j = 0; j < ((AstLexicalRead) ssai[i]).getAccessCount(); j++){
+					int vn = access[j].valueNumber;
+					String ln = access[j].variableName;
+					String scope = access[j].variableDefiner;
+					
+					if (includeScope) {
+						nodeVariableNameMapping.put(vn, ln + "@" + scope);
+					} else {
+						nodeVariableNameMapping.put(vn, ln);
 					}
 				}
 			}

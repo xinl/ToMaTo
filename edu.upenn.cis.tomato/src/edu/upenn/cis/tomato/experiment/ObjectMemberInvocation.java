@@ -80,7 +80,7 @@ public class ObjectMemberInvocation {
 				
 				if( (IsPrintDefinition && targetNames.contains(functionName)) || (IsPrintInvocation && anonymousPattern.length > 1 && anonymousPattern[anonymousPattern.length-2].equalsIgnoreCase("anonymous")) )
 				{
-					DebugUtil.DEBUG_PrintDebugMessage("CGNode name: "+functionName);
+					DebugUtil.printDebugMessage("CGNode name: "+functionName);
 					
 					for(int i=0; i<instructions.length; i++)
 					{
