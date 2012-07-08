@@ -25,7 +25,6 @@ import edu.upenn.cis.tomato.application.ToMaTo;
 public class StaticAnalyzer {
 	private SourceBundle sourceBundle;
 	// need to customize JS extractor to read from sourceBundle
-	private SourceModule sourceModule;
 	private CallGraph cg;
 	private PointerAnalysis pa;
 	private TreeMap<String, TreeMap<Integer, String>> variableNameMapping = new TreeMap<String, TreeMap<Integer, String>>();
@@ -35,7 +34,6 @@ public class StaticAnalyzer {
 	protected static String WALA_PROLOGUE = "Lprologue.js";
 	protected static String FAKE_ROOT_NODE = "LFakeRoot";
 
-	// consider adding more options?
 	//TODO: Add language/environment version
 	public StaticAnalyzer(CallGraph cg, PointerAnalysis pa) {
 		this.cg = cg;

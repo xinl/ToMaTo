@@ -9,7 +9,7 @@ public class PolicyEnforcer {
 	 * to designated positions in sourceBundle in one-pass.
 	 */
 	static public void enforce(SourceBundle sourceBundle, List<Policy> policies) {
-		Map<Position, Treatment> operations;
+		Map<SourcePosition, Treatment> operations;
 		// Use Map to avoid multiple operations on same site.
 	}
 

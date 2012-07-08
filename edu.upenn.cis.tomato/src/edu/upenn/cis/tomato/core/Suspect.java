@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Suspect {
-	protected Position pos;
+	protected SourcePosition pos;
 	protected Map<String, Object> attributes;
 
-	public Suspect(Position pos) {
+	public Suspect(SourcePosition pos) {
 		this.pos = pos;
 		this.attributes = new HashMap<String, Object>();
 	}
-	public Position getPosition() {
+	public SourcePosition getPosition() {
 		return pos;
 	}
 	public Object getAttribute(String name) {

@@ -68,7 +68,7 @@ public class FunctionInvocationAnalyzer {
 						
 						IR calleeIR = calleeNode.getIR();
 						SSAInstruction[] callerInstructions = callerIR.getInstructions();
-						edu.upenn.cis.tomato.core.Position calleePosition = getCGNodePosition(calleeIR,calleeMethod);
+						SourcePosition calleePosition = getCGNodePosition(calleeIR,calleeMethod);
 												
 						IntSet is = callerIR.getCallInstructionIndices(csr);
 						IntIterator iter_is = is.intIterator();
@@ -83,7 +83,7 @@ public class FunctionInvocationAnalyzer {
 							CAstSourcePositionMap.Position p = ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
 							if(p!=null){
 								FunctionInvocationSuspect fis = new FunctionInvocationSuspect(
-										new edu.upenn.cis.tomato.core.Position(p.getURL(), p.getFirstOffset(), p.getLastOffset()),
+										new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()),
 										calleePosition);
 								sl.add(fis);
 								fis.setAttribute("CallerName", callerFunctionName);
@@ -118,9 +118,9 @@ public class FunctionInvocationAnalyzer {
 		return functionName;
 	}
 	
-	protected static edu.upenn.cis.tomato.core.Position getCGNodePosition(IR ir, IMethod method) {
+	protected static SourcePosition getCGNodePosition(IR ir, IMethod method) {
 
-		edu.upenn.cis.tomato.core.Position pos = null;
+		SourcePosition pos = null;
 		SSAInstruction[] instructions = ir.getInstructions();
 		for (int i = 0; i < instructions.length; i++) {
 
@@ -132,7 +132,7 @@ public class FunctionInvocationAnalyzer {
 			if (walaPos != null) {
 
 				if (pos == null) {
-					pos = new edu.upenn.cis.tomato.core.Position(walaPos.getURL(), walaPos.getFirstOffset(), walaPos.getLastOffset());
+					pos = new SourcePosition(walaPos.getURL(), walaPos.getFirstOffset(), walaPos.getLastOffset());
 				} else {
 					if (pos.getStartOffset() > walaPos.getFirstOffset()) {
 						pos.setStartOffset(walaPos.getFirstOffset());
