@@ -1,5 +1,6 @@
 package edu.upenn.cis.tomato.core;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeMap;
 
@@ -25,8 +26,26 @@ public class FunctionInvocationAnalyzer {
 		
 		
 		SuspectList<FunctionInvocationSuspect> sl = new SuspectList<FunctionInvocationSuspect>();
+		HashMap<String, SourcePosition> nodePositions = new HashMap<String, SourcePosition>();
 		
-		// Iterate over All CG Nodes
+		// Iterate over all CG nodes to build the <CGNodeName, SourcePosition> mapping
+		// This is particularly useful to handle constructor invocation suspect
+		for (CGNode node : sa.getCG()) {
+			IMethod nodeMethod = node.getMethod();
+			String nodeClassName = nodeMethod.getClass().getName().toString();
+			String nodeName = nodeMethod.getDeclaringClass().getName().toString();
+
+			boolean isFunctionDefinition = nodeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
+			boolean isApplicationCode = !nodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
+			
+			if (isFunctionDefinition && isApplicationCode) {
+				IR nodeIR = node.getIR();
+				SourcePosition nodePosition = getCGNodePosition(nodeIR,nodeMethod);
+				nodePositions.put(nodeName,nodePosition);
+			}
+		}
+		
+		// Iterate over all CG nodes to build SuspectList
 		for (CGNode callerNode : sa.getCG()) {
 			
 			IMethod callerMethod = callerNode.getMethod();
@@ -64,18 +83,15 @@ public class FunctionInvocationAnalyzer {
 						String calleeFunctionName = getCGNodeFunctionName(calleeNodeName);
 						isFunctionDefinition = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
 						boolean isConstructor = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.ipa.callgraph.JavaScriptConstructTargetSelector$JavaScriptConstructor");
-						
-						if(isConstructor)
-						{
-							//TODO: Need to fill-in corresponding code;
-							continue;
-						}
+						boolean isLanguageConstructor = StaticAnalyzer.LANG_CONSTRUCTOR_NAME_MAPPING.containsValue(calleeFunctionName);
 						
 						//TODO: Need to handle the dispatch case;
-						
-						IR calleeIR = calleeNode.getIR();
 						SSAInstruction[] callerInstructions = callerIR.getInstructions();
-						SourcePosition calleePosition = getCGNodePosition(calleeIR,calleeMethod);
+						SourcePosition calleePosition = nodePositions.get(calleeNodeName);
+						
+						if (calleePosition == null && !isLanguageConstructor) {
+							ErrorUtil.printErrorMessage("Failed to identify CG node postition.");
+						}
 												
 						IntSet is = callerIR.getCallInstructionIndices(csr);
 						IntIterator iter_is = is.intIterator();
@@ -96,10 +112,11 @@ public class FunctionInvocationAnalyzer {
 								fis.setAttribute("CallerName", callerFunctionName);
 								fis.setAttribute("CalleeName", calleeFunctionName);
 								fis.setAttribute("ArgumentCount", argCount);
+								fis.setAttribute("IsConstructor", isConstructor);
 								
 								if (DEBUG) {
 									DebugUtil.printDebugMessage("[Created Function Invocation Suspect]\t" + calleeFunctionName);
-									System.out.println(fis.toString());
+									System.out.println(fis.toString()+"\n");
 								}
 							}
 						}
@@ -110,22 +127,27 @@ public class FunctionInvocationAnalyzer {
 		return sl;
 	}
 	
-	protected static String getCGNodeFunctionName(String declaringName)
+	private static String getCGNodeFunctionName(String declaringName)
 	{
 		String functionName = null;
 		String[] functionNameArray = declaringName.split("/");
 		
-		// Parse out function name
+		// Parse function name
 		if (functionNameArray != null && functionNameArray.length > 0) {
 			functionName = functionNameArray[functionNameArray.length - 1];
 		} else {
 			ErrorUtil.printErrorMessage("Unexpected function name format.");
 		}
 		
-		return functionName;
+		String trueName = StaticAnalyzer.LANG_CONSTRUCTOR_NAME_MAPPING.get(functionName);
+		if(trueName != null){
+			return trueName;
+		} else {
+			return functionName;
+		}
 	}
 	
-	protected static SourcePosition getCGNodePosition(IR ir, IMethod method) {
+	private static SourcePosition getCGNodePosition(IR ir, IMethod method) {
 
 		SourcePosition pos = null;
 		SSAInstruction[] instructions = ir.getInstructions();

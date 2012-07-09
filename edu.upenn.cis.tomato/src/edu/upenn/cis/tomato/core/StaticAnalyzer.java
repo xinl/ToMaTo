@@ -34,14 +34,18 @@ public class StaticAnalyzer {
 	protected static String WALA_PROLOGUE = "Lprologue.js";
 	protected static String FAKE_ROOT_NODE = "LFakeRoot";
 
+	//TODO: Build a comprehensive list
+	protected static TreeMap<String, String> LANG_CONSTRUCTOR_NAME_MAPPING = new TreeMap<String, String>();
+	
 	//TODO: Add language/environment version
 	public StaticAnalyzer(CallGraph cg, PointerAnalysis pa) {
+		initializeConstructorNameMapping();
 		this.cg = cg;
 		this.pa = pa;
 	}
 
 	public StaticAnalyzer(SourceBundle sourceBundle) {
-		
+		initializeConstructorNameMapping();
 		this.sourceBundle = sourceBundle;
 		Set<MappedSourceModule> scripts = this.sourceBundle.getSourceModules();
 				
@@ -77,6 +81,16 @@ public class StaticAnalyzer {
 		SuspectList<Suspect> sl = new SuspectList<Suspect>();
 		sl.addAll(FunctionInvocationAnalyzer.getAllSuspects(this));
 		return sl;
+	}
+	
+	protected void initializeConstructorNameMapping() {
+		LANG_CONSTRUCTOR_NAME_MAPPING.put("LObject", "Object");
+		LANG_CONSTRUCTOR_NAME_MAPPING.put("LFunction", "Function");
+		LANG_CONSTRUCTOR_NAME_MAPPING.put("LArray", "Array");
+		LANG_CONSTRUCTOR_NAME_MAPPING.put("LStringObject", "String");
+		//TODO: Need to make sure the last two make sense
+		LANG_CONSTRUCTOR_NAME_MAPPING.put("LNumber", "Number");
+		LANG_CONSTRUCTOR_NAME_MAPPING.put("LRegExp", "RegExp");
 	}
 	
 	protected TreeMap<Integer, String> getCGNodeVariableNameMapping(
@@ -167,7 +181,6 @@ public class StaticAnalyzer {
 				}
 			}
 		}
-
 		return nodeVariableNameMapping;
 	}
 }
