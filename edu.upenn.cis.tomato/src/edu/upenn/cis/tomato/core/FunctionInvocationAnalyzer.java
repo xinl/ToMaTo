@@ -22,10 +22,10 @@ import edu.upenn.cis.tomato.util.ErrorUtil;
 public class FunctionInvocationAnalyzer {
 
 	public static boolean DEBUG = true;
-	public static SuspectList<FunctionInvocationSuspect> getAllSuspects(StaticAnalyzer sa) {
+	public static SuspectList getAllSuspects(StaticAnalyzer sa) {
 		
 		
-		SuspectList<FunctionInvocationSuspect> sl = new SuspectList<FunctionInvocationSuspect>();
+		SuspectList sl = new SuspectList();
 		HashMap<String, SourcePosition> nodePositions = new HashMap<String, SourcePosition>();
 		
 		// Iterate over all CG nodes to build the <CGNodeName, SourcePosition> mapping

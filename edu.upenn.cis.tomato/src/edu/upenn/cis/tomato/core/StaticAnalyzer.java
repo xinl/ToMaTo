@@ -78,7 +78,7 @@ public class StaticAnalyzer {
 
 	public SuspectList getAllSuspects() {
 		
-		SuspectList<Suspect> sl = new SuspectList<Suspect>();
+		SuspectList sl = new SuspectList();
 		sl.addAll(FunctionInvocationAnalyzer.getAllSuspects(this));
 		return sl;
 	}

@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class SuspectList<Suspect> implements List<Suspect> {
+public class SuspectList implements List<Suspect> {
 	
 	public void filter(PolicyTerm filter) {
 		// TODO
