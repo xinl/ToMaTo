@@ -3,7 +3,7 @@ package edu.upenn.cis.tomato.test;
 import static org.junit.Assert.*;
 
 import java.text.ParseException;
-import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -79,8 +79,8 @@ public class PolicyTest {
 		
 		for (int i = 0; i < ps.length; i++) {
 			Policy p = new Policy(ps[i]);
-			List<PolicyTermGroup> staticTerms = p.getStaticTermGroups();
-			List<PolicyTermGroup> dynamicTerms = p.getDynamicTermGroups();
+			Set<PolicyTermGroup> staticTerms = p.getStaticTermGroups();
+			Set<PolicyTermGroup> dynamicTerms = p.getDynamicTermGroups();
 			//System.out.println("Static:" + staticTerms);
 			//System.out.println("Dynamic:" + dynamicTerms);
 			assertEquals(expected[i][0], staticTerms.size());
