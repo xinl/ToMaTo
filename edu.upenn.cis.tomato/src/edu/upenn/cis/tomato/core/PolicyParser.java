@@ -82,7 +82,7 @@ public class PolicyParser {
 			makeBinaryTree();
 		}
 	}
-	
+
 	protected void parseConjunction() throws ParseException {
 		skipWhiteSpace();
 		parseNegation();
@@ -93,7 +93,7 @@ public class PolicyParser {
 			makeBinaryTree();
 		}
 	}
-	
+
 	protected void parseNegation() throws ParseException {
 		skipWhiteSpace();
 		if (peekToken(TokenType.NOT)) {
@@ -210,11 +210,27 @@ public class PolicyParser {
 		skipToken(TokenType.WHITESPACE);
 	}
 
+	/**
+	 * Test whether next token is of a given type. This method does not move the
+	 * cursor and does not consume any token.
+	 * 
+	 * @param type
+	 *            the expected type of next token
+	 * @return True if next token is of the given type, otherwise, False.
+	 */
 	protected boolean peekToken(TokenType type) {
 		Matcher matcher = getMatcher(type);
 		return matcher.lookingAt();
 	}
 
+	/**
+	 * Turn the first ROOT, AND, OR, NOT token after cursor point into a
+	 * PolicyNode and put it on stack.
+	 * 
+	 * @param type
+	 *            the type of the token to consume
+	 * @throws ParseException
+	 */
 	protected void consumeToken(TokenType type) throws ParseException {
 		skipWhiteSpace();
 		Matcher matcher = getMatcher(type);
@@ -277,18 +293,18 @@ public class PolicyParser {
 	}
 
 	public enum TokenType {
-		ROOT		(":"),
-		AND			("&"),
-		OR			("\\|"),
-		NOT			("!"),
-		NAME		("[a-zA-Z_][\\w\\.]*"),
-		COMPARATOR	("(?:[!><]=)|[=<>]"),
-		STRING		("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using \ (Friedl's: "unrolling-the-loop" technique)
-		INTEGER		("-?\\d+"),
-		FLOAT		("-?\\d+\\.\\d+"),
-		LEFT_PAREN	("\\("),
-		RIGHT_PAREN	("\\)"),
-		WHITESPACE	("\\s+");
+		ROOT(":"),
+		AND("&"),
+		OR("\\|"),
+		NOT("!"),
+		NAME("[a-zA-Z_][\\w\\.]*"),
+		COMPARATOR("(?:[!><]=)|[=<>]"),
+		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using \ (Friedl's: "unrolling-the-loop" technique)
+		INTEGER("-?\\d+"),
+		FLOAT("-?\\d+\\.\\d+"),
+		LEFT_PAREN("\\("),
+		RIGHT_PAREN("\\)"),
+		WHITESPACE("\\s+");
 
 		private final Pattern pattern;
 

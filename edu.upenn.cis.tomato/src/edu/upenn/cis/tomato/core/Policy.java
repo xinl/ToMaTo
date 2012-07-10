@@ -20,7 +20,7 @@ public class Policy {
 	static final NodeType ACTION = NodeType.ACTION;
 	
 	protected String string;
-	protected Set<PolicyTermGroup> terms;
+	protected Set<PolicyTermGroup> terms = new HashSet<PolicyTermGroup>();
 	// A list of groups connected by OR, the groups each contains policy terms connected by AND.
 	protected PolicyAction action;
 	
@@ -33,10 +33,8 @@ public class Policy {
 		assert(root.getRight().getType() == ACTION);
 		this.action = (PolicyAction) root.getRight().getValue();
 		
-		//normalizePolicyTree(root);
 		PolicyNode termsInDNF = getRawDNF(root.getLeft());
 		simplifyDNFTree(termsInDNF, null);
-		
 	}
 
 	private boolean simplifyDNFTree(PolicyNode node, PolicyTermGroup group) {
@@ -50,7 +48,6 @@ public class Policy {
 				PolicyTermGroup newGroup = new PolicyTermGroup();
 				if (simplifyDNFTree(node.getLeft(), newGroup)) {
 					terms.add(newGroup);
-					return true;
 				}
 			}
 			if (node.getRight().getType() == OR) {
@@ -59,13 +56,11 @@ public class Policy {
 				PolicyTermGroup newGroup = new PolicyTermGroup();
 				if (simplifyDNFTree(node.getRight(), newGroup)) {
 					terms.add(newGroup);
-					return true;
 				}
 			}
+			break;
 		case AND:
-			if (simplifyDNFTree(node.getLeft(), group) == false)
-				return false;
-			return simplifyDNFTree(node.getRight(), group);
+			return simplifyDNFTree(node.getLeft(), group) && simplifyDNFTree(node.getRight(), group);
 
 		case NOT:
 			PolicyTerm term = (PolicyTerm) node.getLeft().getValue();
@@ -77,7 +72,7 @@ public class Policy {
 		return false;
 	}
 
-	private PolicyNode getRawDNF(PolicyNode node) {
+	public static PolicyNode getRawDNF(PolicyNode node) {
 		if (node == null) return null;
 		
 		// One level trees
@@ -90,6 +85,8 @@ public class Policy {
 				PolicyNode newNode = new PolicyNode(NOT);
 				newNode.setLeft(new PolicyNode(TERM, term.negate()));
 				return newNode;
+			} else {
+				return node;
 			}
 		}
 		
@@ -183,18 +180,21 @@ public class Policy {
 				orNode.setRight(newAndNode);
 				
 				return getRawDNF(orNode); // take care of step 2 of expanding (a | b) & (c | d)
+			} else {
+				return node;
 			}
 		}
-		
+		assert(false); //we should never reach here.
 		return null;
 	}
-	private void swapChildren(PolicyNode node) {
+	
+	static private void swapChildren(PolicyNode node) {
 		PolicyNode temp = node.getLeft();
 		node.setLeft(node.getRight());
 		node.setRight(temp);
 	}
 
-	private boolean isDNF(PolicyNode node) {
+	static public boolean isDNF(PolicyNode node) {
 		switch (node.getType()) {
 		case TERM:
 			return node.getLeft() == null && node.getRight() == null;
@@ -221,7 +221,7 @@ public class Policy {
 		return string;
 	}
 
-	public List<PolicyTermGroup> getStaticTerms() {
+	public List<PolicyTermGroup> getStaticTermGroups() {
 		List<PolicyTermGroup> staticTerms = new ArrayList<PolicyTermGroup>();
 		for (PolicyTermGroup group : terms) {
 			if (group.isAllStatic()) {
@@ -231,7 +231,7 @@ public class Policy {
 		return staticTerms;
 	}
 
-	public List<PolicyTermGroup> getDynamicTerms() {
+	public List<PolicyTermGroup> getDynamicTermGroups() {
 		List<PolicyTermGroup> dynamicTerms = new ArrayList<PolicyTermGroup>();
 		for (PolicyTermGroup group : terms) {
 			if (!group.isAllStatic()) {
@@ -305,6 +305,11 @@ public class Policy {
 			return Policy.this;
 		}
 		
+		@Override
+		public String toString() {
+			return terms.toString();
+			
+		}
 
 	}
 }
