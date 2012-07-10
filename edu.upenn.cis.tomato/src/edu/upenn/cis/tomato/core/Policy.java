@@ -262,28 +262,32 @@ public class Policy {
 		return string;
 	}
 
-	public Set<PolicyTermGroup> getStaticTermGroups() {
-		Set<PolicyTermGroup> staticTerms = new HashSet<PolicyTermGroup>();
+	public Set<Set<PolicyTerm>> getStaticTermGroups() {
+		Set<Set<PolicyTerm>> staticTerms = new HashSet<Set<PolicyTerm>>();
 		for (PolicyTermGroup group : terms) {
 			if (group.isAllStatic()) {
-				staticTerms.add(group);
+				staticTerms.add(group.getTerms());
 			}
 		}
 		return staticTerms;
 	}
 
-	public Set<PolicyTermGroup> getDynamicTermGroups() {
-		Set<PolicyTermGroup> dynamicTerms = new HashSet<PolicyTermGroup>();
+	public Set<Set<PolicyTerm>> getDynamicTermGroups() {
+		Set<Set<PolicyTerm>> dynamicTerms = new HashSet<Set<PolicyTerm>>();
 		for (PolicyTermGroup group : terms) {
 			if (!group.isAllStatic()) {
-				dynamicTerms.add(group);
+				dynamicTerms.add(group.getTerms());
 			}
 		}
 		return dynamicTerms;
 	}
 	
-	public Set<PolicyTermGroup> getTermGroups() {
-		return terms;
+	public Set<Set<PolicyTerm>> getAllTermGroups() {
+		Set<Set<PolicyTerm>> allTerms = new HashSet<Set<PolicyTerm>>();
+		for (PolicyTermGroup group : terms) {
+			allTerms.add(group.getTerms());
+		}
+		return allTerms;
 	}
 
 	/**
@@ -311,6 +315,10 @@ public class Policy {
 
 		public boolean isAllStatic() {
 			return isAllStatic;
+		}
+		
+		public Set<PolicyTerm> getTerms() {
+			return terms;
 		}
 
 		@Override

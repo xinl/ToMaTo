@@ -11,7 +11,7 @@ import org.junit.Test;
 import edu.upenn.cis.tomato.core.Policy;
 import edu.upenn.cis.tomato.core.PolicyNode;
 import edu.upenn.cis.tomato.core.PolicyParser;
-import edu.upenn.cis.tomato.core.Policy.PolicyTermGroup;
+import edu.upenn.cis.tomato.core.PolicyTerm;
 
 public class PolicyTest {
 
@@ -79,8 +79,8 @@ public class PolicyTest {
 		
 		for (int i = 0; i < ps.length; i++) {
 			Policy p = new Policy(ps[i]);
-			Set<PolicyTermGroup> staticTerms = p.getStaticTermGroups();
-			Set<PolicyTermGroup> dynamicTerms = p.getDynamicTermGroups();
+			Set<Set<PolicyTerm>> staticTerms = p.getStaticTermGroups();
+			Set<Set<PolicyTerm>> dynamicTerms = p.getDynamicTermGroups();
 			//System.out.println("Static:" + staticTerms);
 			//System.out.println("Dynamic:" + dynamicTerms);
 			assertEquals(expected[i][0], staticTerms.size());
