@@ -1,153 +1,102 @@
 package edu.upenn.cis.tomato.core;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.Set;
 
-public class SuspectList implements List<Suspect> {
-	
+/**
+ * A collection of Suspects that supports filtering and logic operation: union,
+ * difference and intersection.
+ * 
+ * @author Xin Li
+ * @version July 11, 2012
+ * 
+ */
+public class SuspectList implements Set<Suspect> {
+	/*
+	 * Here we use composition instead of inheritance because future feature and
+	 * optimization may require we use data structure other than HashSet.
+	 */
+	Set<Suspect> suspects = new HashSet<Suspect>();
+
+	/**
+	 * Remove all Suspect that do not satisfy the given PolicyTerm.
+	 * 
+	 * @param filter
+	 *            The PolicyTerm to used as filtering criterion.
+	 */
 	public void filter(PolicyTerm filter) {
-		// TODO
+		for (Suspect s : suspects) {
+			if (!filter.appliesTo(s)) {
+				remove(s);
+			}
+		}
 	}
 
 	@Override
-	public boolean add(Suspect arg0) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean add(Suspect e) {
+		return suspects.add(e);
 	}
 
 	@Override
-	public void add(int arg0, Suspect arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends Suspect> arg0) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean addAll(int arg0, Collection<? extends Suspect> arg1) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean addAll(Collection<? extends Suspect> c) {
+		return suspects.addAll(c);
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		
+		suspects.clear();
 	}
 
 	@Override
-	public boolean contains(Object arg0) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean contains(Object o) {
+		return suspects.contains(o);
 	}
 
 	@Override
-	public boolean containsAll(Collection<?> arg0) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Suspect get(int arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public int indexOf(Object arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public boolean containsAll(Collection<?> c) {
+		return suspects.containsAll(c);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		return false;
+		return suspects.isEmpty();
 	}
 
 	@Override
 	public Iterator<Suspect> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return suspects.iterator();
 	}
 
 	@Override
-	public int lastIndexOf(Object arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public boolean remove(Object o) {
+		return suspects.remove(o);
 	}
 
 	@Override
-	public ListIterator<Suspect> listIterator() {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean removeAll(Collection<?> c) {
+		return suspects.removeAll(c);
 	}
 
 	@Override
-	public ListIterator<Suspect> listIterator(int arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean remove(Object arg0) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Suspect remove(int arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> arg0) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> arg0) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Suspect set(int arg0, Suspect arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean retainAll(Collection<?> c) {
+		return suspects.retainAll(c);
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public List<Suspect> subList(int arg0, int arg1) {
-		// TODO Auto-generated method stub
-		return null;
+		return suspects.size();
 	}
 
 	@Override
 	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		return null;
+		return suspects.toArray();
 	}
 
 	@Override
-	public <T> T[] toArray(T[] arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public <T> T[] toArray(T[] a) {
+		return suspects.toArray(a);
 	}
-
 
 }

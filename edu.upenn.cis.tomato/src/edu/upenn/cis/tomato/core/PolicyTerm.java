@@ -11,6 +11,10 @@ public class PolicyTerm {
 	protected Object value;
 	private final static Set<String> STATIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(
 			"ActionType",
+			"SiteName",
+			"SiteURL",
+			"SiteStartOffset",
+			"SiteEndOffset",
 			"CallerName",
 			"CallerURL",
 			"CallerStartOffset",
@@ -134,6 +138,38 @@ public class PolicyTerm {
 			valueString = value.toString();
 		}
 		return "" + propertyName + " " + comparator + " " + valueString;
+	}
+	
+	public boolean appliesTo(Suspect suspect) {
+		Object o1 = suspect.getAttribute(propertyName);
+		Object o2 = value;
+		int result;
+		if (o1 instanceof Comparable && o2 instanceof Comparable) {
+			Comparable<Object> c1 = (Comparable<Object>) o1;
+			Comparable<Object> c2 = (Comparable<Object>) o2;
+			try {
+				result = c1.compareTo(c2);
+			} catch (ClassCastException e) {
+				// two objects are of different type
+				return false;
+			}
+			
+			switch (comparator) {
+			case EQUAL:
+				return result == 0;
+			case UNEQUAL:
+				return result != 0;
+			case GREATER_THAN:
+				return result == 1;
+			case LESS_THAN:
+				return result == -1;
+			case GREATER_EQUAL_THAN:
+				return result >= 0;
+			case LESS_EQUAL_THAN:
+				return result <= 0;
+			}
+		}
+		return false;
 	}
 
 	public enum TermType {

@@ -9,7 +9,7 @@ import edu.upenn.cis.tomato.core.PolicyNode.NodeType;
 import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
 
 /**
- * A Policy represented in disjunction normal form.
+ * A policy represented in disjunctive normal form.
  * 
  * @author Xin Li
  * @version July 10, 2012
@@ -50,7 +50,7 @@ public class Policy {
 	 * The Set will ensure no duplicate groups exist.
 	 * 
 	 * @param node
-	 *            The root of a PolicyNode tree in disjunction normal form.
+	 *            The root of a PolicyNode tree in disjunctive normal form.
 	 * @param groupSet
 	 *            The set to be filled in.
 	 */
@@ -107,7 +107,7 @@ public class Policy {
 	}
 
 	/**
-	 * Convert a PolicyNode tree into disjunction normal form. The converted
+	 * Convert a PolicyNode tree into disjunctive normal form. The converted
 	 * tree may contain logic that can be further simplified.
 	 * 
 	 * @param node
