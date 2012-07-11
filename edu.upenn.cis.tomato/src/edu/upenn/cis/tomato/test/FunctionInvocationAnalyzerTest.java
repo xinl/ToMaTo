@@ -19,7 +19,6 @@ import com.ibm.wala.classLoader.SourceModule;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 
-import edu.upenn.cis.tomato.core.FunctionInvocationAnalyzer;
 import edu.upenn.cis.tomato.core.StaticAnalyzer;
 
 
@@ -47,8 +46,7 @@ public class FunctionInvocationAnalyzerTest {
         builder.setBaseURL(url);
         CallGraph cg = builder.makeCallGraph(builder.getOptions());
         PointerAnalysis pa = builder.getPointerAnalysis();
-        
         StaticAnalyzer sa = new StaticAnalyzer(cg, pa);
-        FunctionInvocationAnalyzer.getAllSuspects(sa);
+        sa.getAllSuspects();
 	}
 }

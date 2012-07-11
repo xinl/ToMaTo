@@ -9,6 +9,16 @@ function alert(x) {
 <script language="javascript" type="text/javascript">
 innerAlert1();
 innerAlert2();
+
+function Test()
+{
+	var temp = function (){ var x = 1;};
+	this.p1 = temp ;
+	this.p2 = "some value"; 
+}
+
+Test();
+
 </script>
 
 </HTML>
