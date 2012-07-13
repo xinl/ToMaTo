@@ -22,10 +22,10 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import edu.upenn.cis.tomato.core.StaticAnalyzer;
 
 
-public class FunctionInvocationAnalyzerTest {
+public class StaticAnalyzerTest {
 	
 	@Test
-	public void testBasicAnalyzer() throws Exception {
+	public void testFunctionInvocationAnalyzer() throws Exception {
 		
 		String mashupURL = (new File("").getAbsolutePath()+"/dat/test/function/BasicFunctionInvocation.html").replace("/", File.separator);
 		if (File.separator.equals("\\")) {
@@ -49,4 +49,5 @@ public class FunctionInvocationAnalyzerTest {
         StaticAnalyzer sa = new StaticAnalyzer(cg, pa);
         sa.getAllSuspects();
 	}
+	
 }
