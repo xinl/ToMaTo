@@ -98,7 +98,7 @@ public class Policy {
 				// This group contain a&!a. It's not useful anymore.
 				return false;
 			} else {
-				group.addTerm(term.negate());
+				group.addTerm(term);
 				return true;
 			}
 		}

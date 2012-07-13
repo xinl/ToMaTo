@@ -18,7 +18,9 @@ public class PolicyTest {
 	String[] ps = {
 			"ActionType = \"invoke\" & (CallerName = \"alert\" | CallerName = \"foo.bar\") & TimeInvoked > 10 : custom(\"code\")",
 			"(CallerName = \"eval\" | CallerName = \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
-			"! ! ! (! CallerName = \"alert\" & CallerName = \"foo.bar\") | ! TimeInvoked >= 10 : custom(\"{foo}\")" };
+			"! ! ! (! CallerName = \"alert\" & CallerName = \"foo.bar\") | ! TimeInvoked >= 10 : custom(\"{foo}\")",
+			"SiteStartOffset > 0 : prohibit"
+	};
 
 	String[] bad_ps = {
 			// bad operators
@@ -74,15 +76,16 @@ public class PolicyTest {
 		int[][] expected = {
 				{0, 2},
 				{0, 2},
-				{2, 1}
+				{2, 1},
+				{1, 0}
 		};
 		
 		for (int i = 0; i < ps.length; i++) {
 			Policy p = new Policy(ps[i]);
 			Set<Set<PolicyTerm>> staticTerms = p.getStaticTermGroups();
 			Set<Set<PolicyTerm>> dynamicTerms = p.getDynamicTermGroups();
-			//System.out.println("Static:" + staticTerms);
-			//System.out.println("Dynamic:" + dynamicTerms);
+			System.out.println("Static:" + staticTerms);
+			System.out.println("Dynamic:" + dynamicTerms);
 			assertEquals(expected[i][0], staticTerms.size());
 			assertEquals(expected[i][1], dynamicTerms.size());
 			

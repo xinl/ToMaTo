@@ -47,6 +47,11 @@ public class SuspectList implements Set<Suspect> {
 			}
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return suspects.toString();
+	}
 
 	@Override
 	public boolean add(Suspect e) {
