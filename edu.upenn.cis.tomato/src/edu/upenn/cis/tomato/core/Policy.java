@@ -289,6 +289,10 @@ public class Policy {
 		}
 		return allTerms;
 	}
+	
+	public PolicyAction getAction() {
+		return action;
+	}
 
 	/**
 	 * A group of PolicyTerms connected by logic AND.

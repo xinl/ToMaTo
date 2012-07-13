@@ -20,6 +20,20 @@ public class SuspectList implements Set<Suspect> {
 	 */
 	Set<Suspect> suspects = new HashSet<Suspect>();
 
+	public SuspectList() {
+
+	}
+
+	/**
+	 * Copy constructor
+	 * 
+	 * @param otherList
+	 *            The SuspectList to copy from.
+	 */
+	public SuspectList(SuspectList otherList) {
+		this.suspects = new HashSet<Suspect>(otherList.suspects);
+	}
+
 	/**
 	 * Remove all Suspect that do not satisfy the given PolicyTerm.
 	 * 

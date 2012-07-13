@@ -145,7 +145,9 @@ public class PolicyTerm {
 		Object o2 = value;
 		int result;
 		if (o1 instanceof Comparable && o2 instanceof Comparable) {
+			@SuppressWarnings("unchecked")
 			Comparable<Object> c1 = (Comparable<Object>) o1;
+			@SuppressWarnings("unchecked")
 			Comparable<Object> c2 = (Comparable<Object>) o2;
 			try {
 				result = c1.compareTo(c2);
