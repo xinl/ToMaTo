@@ -9,6 +9,7 @@ public class PolicyTerm {
 	protected String propertyName;
 	protected ComparatorType comparator;
 	protected Object value;
+	// TODO: We need to find a way to sync this list with the property names used by StaticAnalyzer
 	private final static Set<String> STATIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(
 			"ActionType",
 			"SiteName",

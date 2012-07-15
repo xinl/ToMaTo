@@ -11,7 +11,9 @@ import com.ibm.wala.cast.ir.ssa.*;
 import com.ibm.wala.cast.ir.ssa.AstLexicalAccess.Access;
 import com.ibm.wala.cast.js.html.MappedSourceModule;
 import com.ibm.wala.cast.js.html.WebPageLoaderFactory;
+import com.ibm.wala.cast.js.html.WebUtil;
 import com.ibm.wala.cast.js.ipa.callgraph.JSCFABuilder;
+import com.ibm.wala.cast.js.loader.JavaScriptLoader;
 import com.ibm.wala.cast.js.ssa.JavaScriptInvoke;
 import com.ibm.wala.cast.js.test.JSCallGraphBuilderUtil;
 import com.ibm.wala.cast.js.test.JSCallGraphBuilderUtil.CGBuilderType;
@@ -62,7 +64,7 @@ public class StaticAnalyzer {
 	public StaticAnalyzer(SourceBundle sourceBundle) {
 		this.sourceBundle = sourceBundle;
 		Set<MappedSourceModule> scripts = this.sourceBundle.getSourceModules();
-				
+		JavaScriptLoader.addBootstrapFile(WebUtil.preamble);
 		try {
 			JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(
 					new WebPageLoaderFactory(new CAstRhinoTranslatorFactory(), null),
@@ -98,10 +100,11 @@ public class StaticAnalyzer {
 		sl.addAll(this.fia.getAllSuspects(this.cg, this.pa));
 		if (DEBUG) {
 			DebugUtil.printSeparationLine();
-			System.out.println("==== Function Invocation Suspect List =====\n");
+			System.out.println("===== Function Invocation Suspect List =====\n");
 			Iterator<Suspect> iter_sl = sl.iterator();
 			while (iter_sl.hasNext()) {
 				FunctionInvocationSuspect fis = (FunctionInvocationSuspect) iter_sl.next();
+				// System.out.println(fis.attributes.get("CallerWALAName") + "\t" + fis.attributes.get("CalleeWALAName"));
 				System.out.println(fis);
 			}
 		}
@@ -109,7 +112,6 @@ public class StaticAnalyzer {
 	}
 		
 	public void initializeAnalysis() {
-
 		initializeConstructorNameMapping();
 
 		for (CGNode node : this.cg) {
@@ -131,7 +133,6 @@ public class StaticAnalyzer {
 				cgNodePositions.put(nodeName,nodePosition);
 			}
 		}
-		
 		getAliasAnalysisResult();
 	}
 	
@@ -333,10 +334,21 @@ public class StaticAnalyzer {
 	protected class FunctionInvocationAnalyzer {
 
 		private static final boolean DEBUG = false;
+		
+		private HashSet<String> walaNodeFilter = new HashSet<String>();
 		private HashMap<String, HashSet<FunctionInvocationSuspect>> suspectAliasIndex = new HashMap<String, HashSet<FunctionInvocationSuspect>>();
 		
+		private void initialzeNodeFilter() {
+			walaNodeFilter.add("make_node0");
+			walaNodeFilter.add("make_node1");
+			walaNodeFilter.add("make_node2");
+			walaNodeFilter.add("make_node3");
+			walaNodeFilter.add("make_node4");
+		}
+				
 		private SuspectList getAllSuspects(CallGraph cg, PointerAnalysis pa) {
 			
+			initialzeNodeFilter();
 			SuspectList sl = new SuspectList();
 			// Iterate over all CG nodes to build SuspectList
 			for (CGNode callerNode : cg) {
@@ -350,8 +362,10 @@ public class StaticAnalyzer {
 				boolean isApplicationCode = !callerNodeName.startsWith(StaticAnalyzer.WALA_PROLOGUE) 
 											&& !callerNodeName.startsWith(StaticAnalyzer.WALA_PREAMBLE)
 											&& !callerNodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
+				boolean isWALASpecific = walaNodeFilter.contains(callerFunctionName);
+				boolean isWrapperNode = (callerNodeName.split("/").length == 1);
 				
-				if (isFunctionDefinition && isApplicationCode) {
+				if (isFunctionDefinition && isApplicationCode && !isWALASpecific && !isWrapperNode) {
 					
 					if (DEBUG) {
 						DebugUtil.printSeparationLine();

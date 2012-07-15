@@ -140,7 +140,7 @@ public class AliasAnalysis {
 				}
 			}
 		}
-		//XXX
+
 		System.out.println(QueryVariableSet);
 		// Do pointer analysis according to QueryVariableSet and build AnswerVariableSet
 		HeapGraph hg = pa.getHeapGraph(); Iterator<PointerKey> iter_pks = pa.getPointerKeys().iterator();
