@@ -3,6 +3,8 @@ package edu.upenn.cis.tomato.core;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
+
 public abstract class Suspect {
 	/*
 	 * sitePos is presumed to be unique for every possible violation. Therefore
@@ -10,24 +12,24 @@ public abstract class Suspect {
 	 */
 	protected SourcePosition sitePos; // We may want to remove this redundancy later
 	protected SuspectType type;
-	protected Map<String, Object> attributes = new HashMap<String, Object>();
+	protected Map<PropertyName, Object> attributes = new HashMap<PropertyName, Object>();
 
 	public Suspect(SourcePosition sitePos) {
 		this.sitePos = sitePos;
-		attributes.put("SiteURL", sitePos.getURLString());
-		attributes.put("SiteStartOffset", sitePos.getStartOffset());
-		attributes.put("SiteEndOffset", sitePos.getEndOffset());
+		attributes.put(PropertyName.SITE_URL, sitePos.getURLString());
+		attributes.put(PropertyName.SITE_START_OFFSET, sitePos.getStartOffset());
+		attributes.put(PropertyName.SITE_END_OFFSET, sitePos.getEndOffset());
 	}
 
 	public SourcePosition getPosition() {
 		return sitePos;
 	}
 
-	public Object getAttribute(String name) {
+	public Object getAttribute(PropertyName name) {
 		return attributes.get(name);
 	}
 
-	public void setAttribute(String name, Object value) {
+	public void setAttribute(PropertyName name, Object value) {
 		attributes.put(name, value);
 	}
 

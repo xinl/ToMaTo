@@ -1,57 +1,31 @@
 package edu.upenn.cis.tomato.core;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 public class PolicyTerm {
-	protected TermType type;
-	protected String propertyName;
+	protected PropertyName propertyName;
 	protected ComparatorType comparator;
 	protected Object value;
-	// TODO: We need to find a way to sync this list with the property names used by StaticAnalyzer
-	private final static Set<String> STATIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(
-			"ActionType",
-			"SiteName",
-			"SiteURL",
-			"SiteStartOffset",
-			"SiteEndOffset",
-			"CallerName",
-			"CallerURL",
-			"CallerStartOffset",
-			"CallerEndOffset",
-			"CalleeName",
-			"CalleeURL",
-			"CalleeStartOffset",
-			"CalleeEndOffset"));
-	private final static Set<String> DYNAMIC_PROPERTY_NAMES = new HashSet<String>(Arrays.asList(
-			"TimeInvoked"));
 
 	public PolicyTerm(String propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
+		this(PropertyName.fromString(propertyName), comparator, value);
+	}
+	
+	public PolicyTerm(PropertyName propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
 		this.propertyName = propertyName;
 		this.comparator = comparator;
 		this.value = value;
-		if (STATIC_PROPERTY_NAMES.contains(propertyName)) {
-			this.type = TermType.STATIC;
-		} else if (DYNAMIC_PROPERTY_NAMES.contains(propertyName)) {
-			this.type = TermType.DYNAMIC;
-		} else {
-			throw new IllegalArgumentException("Illegal property name.");
-		}
 	}
 	
 	public PolicyTerm(PolicyTerm term) {
 		this.propertyName = term.propertyName;
 		this.comparator = term.comparator;
 		this.value = term.value;
-		this.type = term.type;
 	}
 	
 	public boolean isStatic() {
-		return type == TermType.STATIC;
+		return propertyName.isStatic;
 	}
 
-	public String getPropertyName() {
+	public PropertyName getPropertyName() {
 		return propertyName;
 	}
 
@@ -99,7 +73,6 @@ public class PolicyTerm {
 		int result = 1;
 		result = prime * result + ((comparator == null) ? 0 : comparator.hashCode());
 		result = prime * result + ((propertyName == null) ? 0 : propertyName.hashCode());
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		return result;
 	}
@@ -119,8 +92,6 @@ public class PolicyTerm {
 			if (other.propertyName != null)
 				return false;
 		} else if (!propertyName.equals(other.propertyName))
-			return false;
-		if (type != other.type)
 			return false;
 		if (value == null) {
 			if (other.value != null)
@@ -174,11 +145,6 @@ public class PolicyTerm {
 		}
 		return false;
 	}
-
-	public enum TermType {
-		STATIC,
-		DYNAMIC
-	}
 	
 	public enum ComparatorType {
 		EQUAL				("="),
@@ -192,6 +158,42 @@ public class PolicyTerm {
 		
 		ComparatorType(String string) {
 			this.string = string;
+		}
+		
+		public String toString() {
+			return string;
+		}
+	}
+	
+	public enum PropertyName {
+		// static properties
+		ACTION_TYPE("ActionType", true),
+		SITE_NAME("SiteName", true),
+		SITE_URL("SiteURL", true),
+		SITE_START_OFFSET("SiteStartOffset", true),
+		SITE_END_OFFSET("SiteEndOffset", true),
+		CALLER_NAME("CallerName", true),
+		CALLER_URL("CallerURL", true),
+		CALLER_START_OFFSET("CallerStartOffset", true),
+		CALLER_END_OFFSET("CallerEndOffset", true),
+		CALLEE_NAME("CalleeName", true),
+		CALLEE_URL("CalleeURL", true),
+		CALLEE_START_OFFSET("CalleeStartOffset", true),
+		CALLEE_END_OFFSET("CalleeEndOffset", true),
+		// dynamic properties
+		TIME_INVOKED("TimeInvoked", false);
+		
+		private String string;
+		private boolean isStatic;
+		
+		PropertyName(String string, boolean isStatic) {
+			this.string = string;
+			this.isStatic = isStatic;
+		}
+		
+		static public PropertyName fromString(String str) {
+			str = str.replaceAll("([^A-Z])([A-Z])", "$1_$2").toUpperCase();
+			return valueOf(str);
 		}
 		
 		public String toString() {
