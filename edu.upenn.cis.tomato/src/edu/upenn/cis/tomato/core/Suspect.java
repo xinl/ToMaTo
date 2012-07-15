@@ -9,6 +9,7 @@ public abstract class Suspect {
 	 * it is used as sole field to compare Suspects' equality.
 	 */
 	protected SourcePosition sitePos; // We may want to remove this redundancy later
+	protected SuspectType type;
 	protected Map<String, Object> attributes = new HashMap<String, Object>();
 
 	public Suspect(SourcePosition sitePos) {
@@ -61,4 +62,7 @@ public abstract class Suspect {
 		return true;
 	}
 
+	enum SuspectType {
+		FUNCTION_INVOCATION_SUSPECT
+	}
 }

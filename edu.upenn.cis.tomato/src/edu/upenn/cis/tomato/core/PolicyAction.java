@@ -8,6 +8,14 @@ public class PolicyAction {
 		this.type = type;
 		this.content = content;
 	}
+	
+	public ActionType getType() {
+		return type;
+	}
+
+	public String getContent() {
+		return content;
+	}
 
 	@Override
 	public String toString() {

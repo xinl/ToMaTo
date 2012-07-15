@@ -17,6 +17,7 @@ public class FunctionInvocationSuspect extends Suspect {
 
 	public FunctionInvocationSuspect(SourcePosition callSitePos, SSAVariable funcVar) {
 		super(callSitePos);
+		this.type = SuspectType.FUNCTION_INVOCATION_SUSPECT;
 		this.funcVar = funcVar;
 	}
 	

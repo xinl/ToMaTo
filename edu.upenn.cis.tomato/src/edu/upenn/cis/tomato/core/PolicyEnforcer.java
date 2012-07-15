@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.upenn.cis.tomato.core.TreatmentFactory.Treatment;
+
 public class PolicyEnforcer {
 	/*
 	 * Build patch Lists from each Policies, combine them, then apply each patch
@@ -13,10 +15,11 @@ public class PolicyEnforcer {
 	 */
 	static public void enforce(SourceBundle sourceBundle, List<Policy> policies) {
 		// use Map to avoid multiple operations on same site
-		Map<SourcePosition, Treatment> operations = new HashMap<SourcePosition, Treatment>();
+		Map<Suspect, Treatment> operations = new HashMap<Suspect, Treatment>();
 		
 		// fill in operation map
 		StaticAnalyzer sa = new StaticAnalyzer(sourceBundle);
+		TreatmentFactory tf = new TreatmentFactory();
 		for (Policy p : policies) {
 			Set<Set<PolicyTerm>> staticTerms = p.getStaticTermGroups();
 			Set<Set<PolicyTerm>> dynamicTerms = p.getDynamicTermGroups();
@@ -27,24 +30,21 @@ public class PolicyEnforcer {
 			dynamicSuspects.removeAll(staticSuspects); // remove overlapping suspects
 			
 			// prepare treatments
-			PolicyAction action = p.getAction();
+			Treatment treatment = tf.makeTreatment(p);
 			
 			// add to the operation list
 			for (Suspect s : staticSuspects) {
-				// TODO: put position-treatment pairs into operation list
+				operations.put(s, treatment);
 			}
 			for (Suspect s : dynamicSuspects) {
-				// TODO: put position-treatment pairs into operation list
+				operations.put(s, treatment);
 			}
 		}
 		
-		// carry out the operations
-		Set<String> definitions = new HashSet<String>();
-		for (Map.Entry<SourcePosition, Treatment> op : operations.entrySet()) {
-			SourcePosition sp = op.getKey();
-			Treatment t = op.getValue();
-			// TODO: drop in the treatment at position and add to definitions
-		}
+		// TODO: organize operations into a tree based on nesting relationship
+		
+		// TODO: carry out the operations
+		
 		// TODO: add the definitions to the beginning of web page
 	}
 
