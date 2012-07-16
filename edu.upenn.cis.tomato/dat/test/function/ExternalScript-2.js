@@ -1,4 +1,5 @@
-var calculator = {multiply: function(a, b){ return a * b; } };
+var calculator = {multiply: function(a, b){ return a * b; }};
+var printer = {print: function(a){ alert(a);}};
 
 function substraction(f, g)
 { 
@@ -18,4 +19,6 @@ function innerAlert2()
  	substraction(1,3);
  	addition(10,12);
  	calculator.multiply(2, 3);
+ 	printer.print("text");
+ 	
 }

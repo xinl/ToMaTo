@@ -54,6 +54,7 @@ public class StaticAnalyzer {
 	
 	private static String WALA_PREAMBLE = "Lpreamble.js";
 	private static String WALA_PROLOGUE = "Lprologue.js";
+	private static String FAKE_MAIN_NODE = "__WINDOW_MAIN__";
 	private static String FAKE_ROOT_NODE = "LFakeRoot";
 	
 	//TODO: Add language/environment version
@@ -360,13 +361,15 @@ public class StaticAnalyzer {
 				String callerFunctionName = getCGNodeFunctionName(callerNodeName);
 				
 				boolean isFunctionDefinition = callerClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
-				boolean isApplicationCode = !callerNodeName.startsWith(StaticAnalyzer.WALA_PROLOGUE) 
-											&& !callerNodeName.startsWith(StaticAnalyzer.WALA_PREAMBLE)
-											&& !callerNodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
-				boolean isWALASpecific = walaNodeFilter.contains(callerFunctionName);
+				boolean isApplicationCode = !callerNodeName.startsWith(WALA_PROLOGUE) 
+											&& !callerNodeName.startsWith(WALA_PREAMBLE)
+											&& !callerNodeName.startsWith(FAKE_ROOT_NODE);
+				boolean isWALASpecificCaller = walaNodeFilter.contains(callerFunctionName);
+				boolean isMainNode = callerFunctionName.equals(FAKE_MAIN_NODE);
 				boolean isWrapperNode = (callerNodeName.split("/").length == 1);
 				
-				if (isFunctionDefinition && isApplicationCode && !isWALASpecific && !isWrapperNode) {
+				
+				if (isFunctionDefinition && isApplicationCode && !isWALASpecificCaller && !isWrapperNode) {
 					
 					if (DEBUG) {
 						DebugUtil.printSeparationLine();
@@ -395,7 +398,13 @@ public class StaticAnalyzer {
 							String calleeFunctionName = getCGNodeFunctionName(calleeNodeName);
 							isFunctionDefinition = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
 							boolean isConstructor = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.ipa.callgraph.JavaScriptConstructTargetSelector$JavaScriptConstructor");
+							boolean isAnonymous = (calleeFunctionName.split("@").length == 2);
 							boolean isLanguageConstructor = StaticAnalyzer.LANG_CONSTRUCTOR_NAME_MAPPING.containsValue(calleeFunctionName);
+							boolean isWALASpecificCallee = walaNodeFilter.contains(calleeFunctionName);
+							
+							if (isMainNode && isWALASpecificCallee) {
+								continue;
+							}
 							
 							//TODO: Need to investigate the dispatch case;
 							SSAInstruction[] callerInstructions = callerIR.getInstructions();
@@ -451,6 +460,7 @@ public class StaticAnalyzer {
 									}
 									fis.setAttribute(PropertyName.ARGUMENT_COUNT, argCount);
 									fis.setAttribute(PropertyName.IS_CONSTRUCTOR, isConstructor);
+									fis.setAttribute(PropertyName.IS_ANONYMOUS, isAnonymous);
 									
 									HashSet<FunctionInvocationSuspect> aliasSuspectSet = suspectAliasIndex.get(calleeNodeName);
 									if(aliasSuspectSet == null) {
