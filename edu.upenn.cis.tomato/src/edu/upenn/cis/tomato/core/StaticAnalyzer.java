@@ -34,6 +34,7 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.util.intset.IntIterator;
 import com.ibm.wala.util.intset.IntSet;
 
+import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
 import edu.upenn.cis.tomato.util.DebugUtil;
 import edu.upenn.cis.tomato.util.ErrorUtil;
 
@@ -434,22 +435,22 @@ public class StaticAnalyzer {
 									FunctionInvocationSuspect fis = new FunctionInvocationSuspect(
 											new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()), funcVar);
 									sl.add(fis);
-									fis.setAttribute("CallerName", callerFunctionName);
-									fis.setAttribute("CallerWALAName", callerNodeName);
+									fis.setAttribute(PropertyName.CALLER_NAME, callerFunctionName);
+									fis.setAttribute(PropertyName.CALLER_WALA_NAME, callerNodeName);
 									if (callerPosition != null) {
-										fis.attributes.put("CallerURL", callerPosition.getURLString());
-										fis.attributes.put("CallerStartOffset", callerPosition.getStartOffset());
-										fis.attributes.put("CallerEndOffset", callerPosition.getEndOffset());
+										fis.attributes.put(PropertyName.CALLER_URL, callerPosition.getURLString());
+										fis.attributes.put(PropertyName.CALLER_START_OFFSET, callerPosition.getStartOffset());
+										fis.attributes.put(PropertyName.CALLER_END_OFFSET, callerPosition.getEndOffset());
 									}
-									fis.setAttribute("CalleeName", calleeFunctionName);
-									fis.setAttribute("CalleeWALAName", calleeNodeName);
+									fis.setAttribute(PropertyName.CALLEE_NAME, calleeFunctionName);
+									fis.setAttribute(PropertyName.CALLEE_WALA_NAME, calleeNodeName);
 									if (calleePosition != null) {
-										fis.attributes.put("CalleeURL", callerPosition.getURLString());
-										fis.attributes.put("CalleeStartOffset", callerPosition.getStartOffset());
-										fis.attributes.put("CalleeEndOffset", callerPosition.getEndOffset());
+										fis.attributes.put(PropertyName.CALLEE_URL, callerPosition.getURLString());
+										fis.attributes.put(PropertyName.CALLEE_START_OFFSET, callerPosition.getStartOffset());
+										fis.attributes.put(PropertyName.CALLEE_END_OFFSET, callerPosition.getEndOffset());
 									}
-									fis.setAttribute("ArgumentCount", argCount);
-									fis.setAttribute("IsConstructor", isConstructor);
+									fis.setAttribute(PropertyName.ARGUMENT_COUNT, argCount);
+									fis.setAttribute(PropertyName.IS_CONSTRUCTOR, isConstructor);
 									
 									HashSet<FunctionInvocationSuspect> aliasSuspectSet = suspectAliasIndex.get(calleeNodeName);
 									if(aliasSuspectSet == null) {
@@ -472,9 +473,9 @@ public class StaticAnalyzer {
 			Iterator<Suspect> iter_sl = sl.iterator();
 			while (iter_sl.hasNext()) {
 				FunctionInvocationSuspect fis = (FunctionInvocationSuspect) iter_sl.next();
-				HashSet<FunctionInvocationSuspect> aliasSuspectSet = suspectAliasIndex.get(fis.getAttribute("CalleeWALAName"));
+				HashSet<FunctionInvocationSuspect> aliasSuspectSet = suspectAliasIndex.get(fis.getAttribute(PropertyName.CALLEE_WALA_NAME));
 				if (aliasSuspectSet != null && aliasSuspectSet.size() > 1) {
-					fis.setAttribute("AliasSuspect", aliasSuspectSet);
+					fis.setAttribute(PropertyName.ALIAS_SUSPECT, aliasSuspectSet);
 				}
 			}
 			

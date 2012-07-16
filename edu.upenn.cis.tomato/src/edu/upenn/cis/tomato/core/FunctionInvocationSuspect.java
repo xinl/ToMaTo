@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
+
 public class FunctionInvocationSuspect extends Suspect {
 	protected SSAVariable funcVar;
 	public SSAVariable getFuncVar() {
@@ -38,17 +40,17 @@ public class FunctionInvocationSuspect extends Suspect {
 	public String toString() {
 		
 		String result = this.toSignatureString() + "===== Attribute List =====\n";
-		Iterator<Entry<String, Object>> iter_attr = attributes.entrySet().iterator();
+		Iterator<Entry<PropertyName, Object>> iter_attr = attributes.entrySet().iterator();
 		while (iter_attr.hasNext()) {
-			Entry<String, Object> entry = iter_attr.next();
-			String name = entry.getKey();
+			Entry<PropertyName, Object> entry = iter_attr.next();
+			PropertyName name = entry.getKey();
 			Object value = entry.getValue();
-			if (!name.equals("AliasSuspect")) {
+			if (!name.equals(PropertyName.ALIAS_SUSPECT)) {
 				result = result + "[" + name + "] " + value + "\n";
 			} 
 		}
 		
-		HashSet<FunctionInvocationSuspect> aliasSet = (HashSet<FunctionInvocationSuspect>) attributes.get("AliasSuspect");
+		HashSet<FunctionInvocationSuspect> aliasSet = (HashSet<FunctionInvocationSuspect>) attributes.get(PropertyName.ALIAS_SUSPECT);
 		if(aliasSet != null) {
 			result = result + "===== Alias Suspect =====\n";
 			Iterator<FunctionInvocationSuspect> iter_as = aliasSet.iterator();

@@ -168,18 +168,23 @@ public class PolicyTerm {
 	public enum PropertyName {
 		// static properties
 		ACTION_TYPE("ActionType", true),
+		ALIAS_SUSPECT("AliasSuspect", true),
+		ARGUMENT_COUNT("ArgumentCount", true),
 		SITE_NAME("SiteName", true),
 		SITE_URL("SiteURL", true),
 		SITE_START_OFFSET("SiteStartOffset", true),
 		SITE_END_OFFSET("SiteEndOffset", true),
 		CALLER_NAME("CallerName", true),
+		CALLER_WALA_NAME("CallerWALAName", true),
 		CALLER_URL("CallerURL", true),
 		CALLER_START_OFFSET("CallerStartOffset", true),
 		CALLER_END_OFFSET("CallerEndOffset", true),
 		CALLEE_NAME("CalleeName", true),
+		CALLEE_WALA_NAME("CalleeWALAName", true),
 		CALLEE_URL("CalleeURL", true),
 		CALLEE_START_OFFSET("CalleeStartOffset", true),
 		CALLEE_END_OFFSET("CalleeEndOffset", true),
+		IS_CONSTRUCTOR("IsConstructor", true),
 		// dynamic properties
 		TIME_INVOKED("TimeInvoked", false);
 		
