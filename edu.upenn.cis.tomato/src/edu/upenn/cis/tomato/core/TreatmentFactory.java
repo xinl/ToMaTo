@@ -24,22 +24,22 @@ public class TreatmentFactory {
 	public Treatment makeTreatment(Policy policy) {
 		// build definition
 		count++;
-		String funcName = "treat" + count;
-		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (static, context, func)";
+		String funcName = "t" + count;
+		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (_static, _context, _func)";
 		Set<String> staticVars = new HashSet<String>();
 		Set<String> epilog = new HashSet<String>();
 
 		// build condition
-		String cond = "var cond = static";
+		String cond = "var _cond = _static";
 		Set<Set<PolicyTerm>> dynamicTermGroups = policy.getDynamicTermGroups();
 		for (Set<PolicyTerm> group : dynamicTermGroups) {
 			cond += " || (";
 			for (PolicyTerm term : group) {
 				if (!term.isStatic()) { // all static terms are true and omitted
 					if (term.getPropertyName().equals("TimeInvoked")) {
-						cond += funcName + ".TimeInvoked " + term.getComparator() + " " + term.getValue() + " &&";
+						cond += "this" + funcName + ".TimeInvoked " + term.getComparator() + " " + term.getValue() + " &&";
 						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimeInvoked = 0");
-						epilog.add(funcName + ".TimeInvoked++;");
+						epilog.add("this." + funcName + ".TimeInvoked++;");
 					}
 				}
 			}
@@ -50,10 +50,10 @@ public class TreatmentFactory {
 		cond += ";";
 
 		// build return value
-		String retVar = "var retVar = null;";
+		String retVar = "var _retVar = null;";
 
 		// build if clause
-		String ifClause = "if (cond) ";
+		String ifClause = "if (_cond) ";
 		switch (policy.getAction().getType()) {
 		case PROHIBIT:
 			ifClause += ";"; // do nothing with empty statement
@@ -69,13 +69,13 @@ public class TreatmentFactory {
 		def += retVar;
 		def += ifClause;
 		if (epilog.size() > 0) {
-			def += "if (!static) {";
+			def += "if (!_static) {";
 			for (String s : epilog) {
 				def += s;
 			}
 			def += "}";
 		}
-		def += "return retVar;";
+		def += "return _retVar;";
 		def += "};"; // close function
 		// the "static variables" initializers after function definition
 		for (String s : staticVars) {
