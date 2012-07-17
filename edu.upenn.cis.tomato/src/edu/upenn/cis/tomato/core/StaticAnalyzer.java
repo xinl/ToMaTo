@@ -29,12 +29,12 @@ import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
-import com.ibm.wala.ssa.IR;
-import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.*;
 import com.ibm.wala.util.intset.IntIterator;
 import com.ibm.wala.util.intset.IntSet;
 
 import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
+import edu.upenn.cis.tomato.core.Suspect.SuspectType;
 import edu.upenn.cis.tomato.util.DebugUtil;
 import edu.upenn.cis.tomato.util.ErrorUtil;
 
@@ -105,8 +105,7 @@ public class StaticAnalyzer {
 			System.out.println("===== Function Invocation Suspect List =====\n");
 			Iterator<Suspect> iter_sl = sl.iterator();
 			while (iter_sl.hasNext()) {
-				FunctionInvocationSuspect fis = (FunctionInvocationSuspect) iter_sl.next();
-				// System.out.println(fis.attributes.get("CallerWALAName") + "\t" + fis.attributes.get("CalleeWALAName"));
+				Suspect fis = (Suspect) iter_sl.next();
 				System.out.println(fis);
 			}
 		}
@@ -114,6 +113,7 @@ public class StaticAnalyzer {
 	}
 		
 	public void initializeAnalysis() {
+		boolean DEBUG = false;
 		initializeConstructorNameMapping();
 
 		for (CGNode node : this.cg) {
@@ -125,15 +125,17 @@ public class StaticAnalyzer {
 			boolean isApplicationCode = !nodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
 			
 			if (isFunctionDefinition && isApplicationCode) {
-				
 				// Build variable name mapping
 				getCGNodeVariableNameMapping(node, nodeName, nodeMethod, false);
-				
 				// Build node position list
 				IR nodeIR = node.getIR();
 				SourcePosition nodePosition = getCGNodePosition(nodeIR,nodeMethod);
 				cgNodePositions.put(nodeName,nodePosition);
 			}
+		}
+		
+		if (DEBUG) {
+			DebugUtil.printDebugMessage("[VariableNameMapping Size] " + variableNameMapping.size());
 		}
 		getAliasAnalysisResult();
 	}
@@ -143,7 +145,8 @@ public class StaticAnalyzer {
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LFunction", "Function");
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LArray", "Array");
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LStringObject", "String");
-		//TODO: Need to make sure the last two make sense
+		// TODO: Need to make sure the last two make sense. Probably need to
+		// look at code in com.ibm.wala.cast.js.loader.JavaScriptLoader;
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LNumber", "Number");
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LRegExp", "RegExp");
 	}
@@ -187,8 +190,7 @@ public class StaticAnalyzer {
 		
 		IR ir = node.getIR();
 		SSAInstruction[] ssai = ir.getInstructions();
-		for (int i = 0; i < ssai.length; i++) {
-			
+		for (int i = 0; i < ssai.length; i++) {		
 			if (ssai[i] == null) {
 				continue;
 			}
@@ -196,14 +198,10 @@ public class StaticAnalyzer {
 			for (int j = 0; j < ssai[i].getNumberOfDefs(); j++) {
 				int def_vn = ssai[i].getDef(j);
 				String[] ln = ir.getLocalNames(i, def_vn);
+				SSAVariable var = new SSAVariable(nodeName, def_vn);
 				if (ln != null) {
 					for (int k = 0; k < ln.length; k++) {
-						SSAVariable var = new SSAVariable(nodeName, def_vn);
-						if (includeScope) {
-							nodeVariableNameMapping.put(var, ln[k] + "@" + nodeName);
-						} else {
-							nodeVariableNameMapping.put(var, ln[k]);
-						}
+						putVariableNameMappingEntry(nodeVariableNameMapping, var, ln[k], nodeName, includeScope);
 					}
 				}
 			}
@@ -214,49 +212,77 @@ public class StaticAnalyzer {
 				SSAVariable var = new SSAVariable(nodeName, use_vn);
 				if (ln != null) {
 					for (int k = 0; k < ln.length; k++) {
-						if (includeScope) {
-							nodeVariableNameMapping.put(var, ln[k] + "@" + nodeName);
-						} else {
-							nodeVariableNameMapping.put(var, ln[k]);
-						}
+						putVariableNameMappingEntry(nodeVariableNameMapping, var, ln[k], nodeName, includeScope);
 					}
 				}
 			}
 			
-			if(ssai[i] instanceof AstGlobalRead){		
-				int def_vn = ((AstGlobalRead) ssai[i]).getDef();
-				SSAVariable var = new SSAVariable(nodeName, def_vn);
+			// We enumerate every type of SSA instruction to make sure we never miss one type
+			if (ssai[i] instanceof AstGlobalRead) {
+				
+				int vn = ((AstGlobalRead) ssai[i]).getDef();
+				SSAVariable var = new SSAVariable(nodeName, vn);
 				String[] gn = ((AstGlobalRead) ssai[i]).getGlobalName().split(" ");
 				if (gn.length == 2) {
 					String scope = gn[0];
 					String ln = gn[1];
-					if (includeScope) {
-						nodeVariableNameMapping.put(var, ln + "@" + scope);
-					} else {
-						nodeVariableNameMapping.put(var, ln);
-					}
+					putVariableNameMappingEntry(nodeVariableNameMapping, var, ln, scope, includeScope);
 				} else {
 					ErrorUtil.printErrorMessage("Failed to parse AstGlobalRead instruction.");
 				}
-			}else if(ssai[i] instanceof AstLexicalRead){
 				
+			} else if (ssai[i] instanceof AstGlobalWrite) {
+				
+				int vn = ((AstGlobalWrite) ssai[i]).getVal();
+				SSAVariable var = new SSAVariable(nodeName, vn);
+				String[] gn = ((AstGlobalWrite) ssai[i]).getGlobalName().split(" ");
+				if (gn.length == 2) {
+					String scope = gn[0];
+					String ln = gn[1];
+					putVariableNameMappingEntry(nodeVariableNameMapping, var, ln, scope, includeScope);
+				} else {
+					ErrorUtil.printErrorMessage("Failed to parse AstGlobalWrite instruction.");
+				}
+				
+			} else if (ssai[i] instanceof AstLexicalRead) {
+
 				Access[] access = ((AstLexicalRead) ssai[i]).getAccesses();
-				for(int j = 0; j < ((AstLexicalRead) ssai[i]).getAccessCount(); j++){
+				for (int j = 0; j < ((AstLexicalRead) ssai[i]).getAccessCount(); j++) {
 					int vn = access[j].valueNumber;
 					String ln = access[j].variableName;
 					String scope = access[j].variableDefiner;
 					SSAVariable var = new SSAVariable(nodeName, vn);
-					if (includeScope) {
-						nodeVariableNameMapping.put(var, ln + "@" + scope);
-					} else {
-						nodeVariableNameMapping.put(var, ln);
-					}
+					putVariableNameMappingEntry(nodeVariableNameMapping, var, ln, scope, includeScope);
 				}
+				
+			} else if (ssai[i] instanceof SSANewInstruction) {
+				// class com.ibm.wala.cast.js.loader.JavaScriptLoader$1$1$4
+				// nothing needs to be done for this type
+			} else if (ssai[i] instanceof SSAPutInstruction) {
+				// class com.ibm.wala.cast.js.loader.JavaScriptLoader$1$1$5				
+				SSAVariable objVar = new SSAVariable(nodeName, ((SSAPutInstruction) ssai[i]).getUse(0));
+				String objName = nodeVariableNameMapping.get(objVar);
+				if (objName == null) {
+					// ErrorUtil.printErrorMessage("Failed to get object name when parsing SSAPutInstruction.");
+				}
+				SSAVariable memberVar = new SSAVariable(nodeName, ((SSAPutInstruction) ssai[i]).getVal());
+				String memberName = objName + "." + ((SSAPutInstruction) ssai[i]).getDeclaredField().getName().toString();
+				putVariableNameMappingEntry(nodeVariableNameMapping, memberVar, memberName, nodeName, includeScope);
+			} else {
+				// System.out.println(ssai[i].getClass() + "\t" + ssai[i]);
 			}
 		}
 		
 		this.variableNameMapping.putAll(nodeVariableNameMapping);
 		return nodeVariableNameMapping;
+	}
+	
+	private void putVariableNameMappingEntry (HashMap<SSAVariable, String> nodeVariableNameMapping, SSAVariable var, String localName, String scope, boolean includeScope) {
+		if (includeScope) {
+			nodeVariableNameMapping.put(var, localName + "@" + scope);
+		} else {
+			nodeVariableNameMapping.put(var, localName);
+		}	
 	}
 	
 	private void getAliasAnalysisResult() {
@@ -338,7 +364,7 @@ public class StaticAnalyzer {
 		private static final boolean DEBUG = false;
 		
 		private HashSet<String> walaNodeFilter = new HashSet<String>();
-		private HashMap<String, HashSet<FunctionInvocationSuspect>> suspectAliasIndex = new HashMap<String, HashSet<FunctionInvocationSuspect>>();
+		private HashMap<String, HashSet<Suspect>> suspectAliasIndex = new HashMap<String, HashSet<Suspect>>();
 		
 		private void initialzeNodeFilter() {
 			walaNodeFilter.add("make_node0");
@@ -441,9 +467,9 @@ public class StaticAnalyzer {
 																							
 								CAstSourcePositionMap.Position p = ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
 								if(p!=null){
-									FunctionInvocationSuspect fis = new FunctionInvocationSuspect(
-											new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()), funcVar);
+									Suspect fis = new Suspect(new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()));									
 									sl.add(fis);
+									fis.setType(SuspectType.FUNCTION_INVOCATION_SUSPECT);
 									fis.setAttribute(PropertyName.CALLER_NAME, callerFunctionName);
 									fis.setAttribute(PropertyName.CALLER_WALA_NAME, callerNodeName);
 									if (callerPosition != null) {
@@ -451,7 +477,14 @@ public class StaticAnalyzer {
 										fis.attributes.put(PropertyName.CALLER_START_OFFSET, callerPosition.getStartOffset());
 										fis.attributes.put(PropertyName.CALLER_END_OFFSET, callerPosition.getEndOffset());
 									}
-									fis.setAttribute(PropertyName.CALLEE_NAME, calleeFunctionName);
+									
+									if(isAnonymous) {
+										fis.setAttribute(PropertyName.CALLEE_NAME, "");
+									}
+									else {
+										fis.setAttribute(PropertyName.CALLEE_NAME, calleeFunctionName);
+									}
+									
 									fis.setAttribute(PropertyName.CALLEE_WALA_NAME, calleeNodeName);
 									if (calleePosition != null) {
 										fis.attributes.put(PropertyName.CALLEE_URL, callerPosition.getURLString());
@@ -460,11 +493,10 @@ public class StaticAnalyzer {
 									}
 									fis.setAttribute(PropertyName.ARGUMENT_COUNT, argCount);
 									fis.setAttribute(PropertyName.IS_CONSTRUCTOR, isConstructor);
-									fis.setAttribute(PropertyName.IS_ANONYMOUS, isAnonymous);
 									
-									HashSet<FunctionInvocationSuspect> aliasSuspectSet = suspectAliasIndex.get(calleeNodeName);
+									HashSet<Suspect> aliasSuspectSet = suspectAliasIndex.get(calleeNodeName);
 									if(aliasSuspectSet == null) {
-										aliasSuspectSet = new HashSet<FunctionInvocationSuspect>();
+										aliasSuspectSet = new HashSet<Suspect>();
 										suspectAliasIndex.put(calleeNodeName, aliasSuspectSet);
 									}
 									aliasSuspectSet.add(fis);
@@ -482,8 +514,8 @@ public class StaticAnalyzer {
 			
 			Iterator<Suspect> iter_sl = sl.iterator();
 			while (iter_sl.hasNext()) {
-				FunctionInvocationSuspect fis = (FunctionInvocationSuspect) iter_sl.next();
-				HashSet<FunctionInvocationSuspect> aliasSuspectSet = suspectAliasIndex.get(fis.getAttribute(PropertyName.CALLEE_WALA_NAME));
+				Suspect fis = (Suspect) iter_sl.next();
+				HashSet<Suspect> aliasSuspectSet = suspectAliasIndex.get(fis.getAttribute(PropertyName.CALLEE_WALA_NAME));
 				if (aliasSuspectSet != null && aliasSuspectSet.size() > 1) {
 					fis.setAttribute(PropertyName.ALIAS_SUSPECT, aliasSuspectSet);
 				}

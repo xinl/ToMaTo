@@ -1,11 +1,14 @@
 package edu.upenn.cis.tomato.core;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
 
-public abstract class Suspect {
+public class Suspect {
 	/*
 	 * sitePos is presumed to be unique for every possible violation. Therefore
 	 * it is used as sole field to compare Suspects' equality.
@@ -32,10 +35,42 @@ public abstract class Suspect {
 	public void setAttribute(PropertyName name, Object value) {
 		attributes.put(name, value);
 	}
+	
+	public SuspectType getType() {
+		return type;
+	}
 
+	public void setType(SuspectType type) {
+		this.type = type;
+	}
+
+	public String toSignatureString() {
+		return "[Suspect Signature] [Position] " + sitePos + "\t[Type] " + type + "\n";
+	}
+	
 	@Override
 	public String toString() {
-		return "Position\t" + sitePos.toString() + "\nAttributes\t" + attributes.toString();
+		
+		String result = this.toSignatureString() + "===== Attribute List =====\n";
+		Iterator<Entry<PropertyName, Object>> iter_attr = attributes.entrySet().iterator();
+		while (iter_attr.hasNext()) {
+			Entry<PropertyName, Object> entry = iter_attr.next();
+			PropertyName name = entry.getKey();
+			Object value = entry.getValue();
+			if (!name.equals(PropertyName.ALIAS_SUSPECT)) {
+				result = result + "[" + name + "] " + value + "\n";
+			} 
+		}
+		
+		HashSet<Suspect> aliasSet = (HashSet<Suspect>) attributes.get(PropertyName.ALIAS_SUSPECT);
+		if(aliasSet != null) {
+			result = result + "===== Alias Suspect =====\n";
+			Iterator<Suspect> iter_as = aliasSet.iterator();
+			while (iter_as.hasNext()) {
+				result = result + iter_as.next().toSignatureString();
+			}
+		}		
+		return result;
 	}
 
 	@Override
@@ -43,6 +78,7 @@ public abstract class Suspect {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((sitePos == null) ? 0 : sitePos.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
 
@@ -60,7 +96,8 @@ public abstract class Suspect {
 				return false;
 		} else if (!sitePos.equals(other.sitePos))
 			return false;
-		// Two Suspect is considered equal if their sitePos's are equal.
+		if (type != other.type)
+			return false;
 		return true;
 	}
 

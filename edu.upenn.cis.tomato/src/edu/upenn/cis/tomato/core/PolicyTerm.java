@@ -184,7 +184,6 @@ public class PolicyTerm {
 		CALLEE_URL("CalleeURL", true),
 		CALLEE_START_OFFSET("CalleeStartOffset", true),
 		CALLEE_END_OFFSET("CalleeEndOffset", true),
-		IS_ANONYMOUS("isAnonymous", true),
 		IS_CONSTRUCTOR("IsConstructor", true),
 		// dynamic properties
 		TIME_INVOKED("TimeInvoked", false);
