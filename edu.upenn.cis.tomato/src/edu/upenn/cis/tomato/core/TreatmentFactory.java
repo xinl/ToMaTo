@@ -28,8 +28,12 @@ public class TreatmentFactory {
 		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (_static, _context, _func)";
 		Set<String> staticVars = new HashSet<String>();
 		Set<String> epilog = new HashSet<String>();
+		
+		// recreate original arguments array
+		String args = "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);";
 
 		// build condition
+		// TODO: a solution to name conflicts on _cond, etc will be referring to them as argument[x] but it'll make code harder to read
 		String cond = "var _cond = _static";
 		Set<Set<PolicyTerm>> dynamicTermGroups = policy.getDynamicTermGroups();
 		for (Set<PolicyTerm> group : dynamicTermGroups) {
@@ -65,6 +69,7 @@ public class TreatmentFactory {
 
 		// combine all parts into definition string
 		String def = funcSignature + " {";
+		def += args;
 		def += cond;
 		def += retVar;
 		def += ifClause;
@@ -108,7 +113,6 @@ public class TreatmentFactory {
 		String encoded = "";
 		for (int i = 0; i < 11; i++) {
 			int index = (int) (num & 0x3f);
-			//System.out.println("I: " + index);
 			encoded += base64chars.charAt(index);
 			num >>= 6;
 		}
