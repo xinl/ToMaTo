@@ -133,6 +133,15 @@ public class SourceBundle {
 		return sources.get(uri);
 
 	}
+	
+	public void setSourceContent(URI uri, String content) {
+		uri = resolveURI(uri);
+		if (sources.containsKey(uri)) {
+			sources.put(uri, content);
+		} else {
+			System.err.println("No such URI found in this source bundle: " + uri);
+		}
+	}
 
 	/**
 	 * Get an InputStream of the source content of the specified URI.
