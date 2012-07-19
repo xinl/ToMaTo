@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.OutputDocument;
 import net.htmlparser.jericho.Source;
@@ -71,11 +72,18 @@ public class SourceBundle {
 		SourceBundleSourceExtractor extractor = new SourceBundleSourceExtractor();
 		this.sourceModules = extractor.extractSources(entryPointURI, new JerichoHtmlParser());
 	}
-	
+
 	public SourceBundle(String entryPointURIString) throws URISyntaxException, InvalidParameterException, IOException {
 		this(new URI(entryPointURIString));
 	}
 
+	/**
+	 * Return a URI without filename part, if any. (e.g.:
+	 * http://example.com/file.html becomes http://example.com/)
+	 * 
+	 * @param uri
+	 * @return The new URI without filename.
+	 */
 	private URI getBaseURI(URI uri) {
 		String path = uri.getPath();
 		int separatorIndex = path.lastIndexOf("/");
@@ -133,7 +141,7 @@ public class SourceBundle {
 		return sources.get(uri);
 
 	}
-	
+
 	public void setSourceContent(URI uri, String content) {
 		uri = resolveURI(uri);
 		if (sources.containsKey(uri)) {
@@ -197,6 +205,34 @@ public class SourceBundle {
 		URI key = resolveURI(uri);
 		sources.put(key, content);
 		return key;
+	}
+	
+	public URI addTreatmentDefinitions(String filename, String content) {
+		URI uri = null;
+		try {
+			uri = new URI(filename);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
+		// add a script tag to <head> tag in entry point page
+		String newScriptTag = "<script src=\"" + filename + "\"></script>";
+		String htmlText = getSourceContent(getEntryPointURI());
+		Source source = new Source(htmlText);
+		OutputDocument output = new OutputDocument(source);
+		Element headElement = source.getFirstElement(HTMLElementName.HEAD);
+		if (headElement == null) {
+			Element htmlElement = source.getFirstElement(HTMLElementName.HTML);
+			if (htmlElement == null) {
+				System.err.println("No <HTML> tag found. Check validity of entry point page.");
+				return null;
+			}
+			output.replace(htmlElement.getContent(), "<head>" + newScriptTag + "</head>" + htmlElement.getContent().toString());
+		} else {
+			output.replace(headElement.getContent(), newScriptTag + headElement.getContent().toString());
+		}
+		// add a new source to source bundle
+		return addSource(uri, content);
 	}
 
 	private URI resolveURI(URI uri) {

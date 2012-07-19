@@ -107,8 +107,9 @@ public class PolicyEnforcer {
 			}
 		}
 		
+		// add the definitions to the beginning of web page
 		
-		// TODO: add the definitions to the beginning of web page
+		sourceBundle.addTreatmentDefinitions(tf.BASE_OBJECT_NAME + ".js", tf.getDefinitions());
 	}
 
 	static private SuspectList filterSuspectList(SuspectList baseList, Set<Set<PolicyTerm>> termGroups) {
