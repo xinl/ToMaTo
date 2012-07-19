@@ -41,7 +41,8 @@ public class CommandLineFrontEnd {
 			policies.add(p);
 		}
 
-		PolicyEnforcer.enforce(src, policies);
+		PolicyEnforcer pe = new PolicyEnforcer(src, policies);
+		pe.enforce();
 
 		try {
 			src.saveSourceBundleTo(outputPath);
