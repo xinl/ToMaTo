@@ -39,24 +39,23 @@ import edu.upenn.cis.tomato.util.DebugUtil;
 import edu.upenn.cis.tomato.util.ErrorUtil;
 
 public class StaticAnalyzer {
-	
-	//TODO: Need to customize JS extractor to read from sourceBundle
+
 	private SourceBundle sourceBundle;
 	private CallGraph cg;
 	private PointerAnalysis pa;
-	private FunctionInvocationAnalyzer fia = new FunctionInvocationAnalyzer();
+	private final FunctionInvocationAnalyzer fia = new FunctionInvocationAnalyzer();
 	protected HashMap<SSAVariable, String> variableNameMapping = new HashMap<SSAVariable, String>();
 	protected HashMap<String, SourcePosition> cgNodePositions = new HashMap<String, SourcePosition>();
 	protected HashMap<SSAVariable, HashSet<SSAVariable>> aliasAnalysisResult = new HashMap<SSAVariable, HashSet<SSAVariable>>();
-	
+
 	//TODO: Build a comprehensive list
 	protected static TreeMap<String, String> LANG_CONSTRUCTOR_NAME_MAPPING = new TreeMap<String, String>();
-	
+
 	private static String WALA_PREAMBLE = "Lpreamble.js";
 	private static String WALA_PROLOGUE = "Lprologue.js";
 	private static String FAKE_MAIN_NODE = "__WINDOW_MAIN__";
 	private static String FAKE_ROOT_NODE = "LFakeRoot";
-	
+
 	//TODO: Add language/environment version
 	public StaticAnalyzer(CallGraph cg, PointerAnalysis pa) {
 		this.cg = cg;
@@ -70,7 +69,7 @@ public class StaticAnalyzer {
 		try {
 			JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(
 					new WebPageLoaderFactory(new CAstRhinoTranslatorFactory(), null),
-					scripts.toArray(new SourceModule[scripts.size()]), 
+					scripts.toArray(new SourceModule[scripts.size()]),
 					CGBuilderType.ZERO_ONE_CFA, AstIRFactory.makeDefaultFactory());
 
 			builder.setBaseURL(sourceBundle.getEntryPointURI().toURL());
@@ -80,11 +79,11 @@ public class StaticAnalyzer {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public SourceBundle getSourceBundle() {
 		return sourceBundle;
 	}
-	
+
 	public CallGraph getCG() {
 		return cg;
 	}
@@ -94,9 +93,9 @@ public class StaticAnalyzer {
 	}
 
 	public SuspectList getAllSuspects() {
-		
+
 		boolean DEBUG = true;
-		
+
 		initializeAnalysis();
 		SuspectList sl = new SuspectList();
 		sl.addAll(this.fia.getAllSuspects(this.cg, this.pa));
@@ -105,13 +104,13 @@ public class StaticAnalyzer {
 			System.out.println("===== Function Invocation Suspect List =====\n");
 			Iterator<Suspect> iter_sl = sl.iterator();
 			while (iter_sl.hasNext()) {
-				Suspect fis = (Suspect) iter_sl.next();
+				Suspect fis = iter_sl.next();
 				System.out.println(fis);
 			}
 		}
 		return sl;
 	}
-		
+
 	public void initializeAnalysis() {
 		boolean DEBUG = false;
 		initializeConstructorNameMapping();
@@ -120,10 +119,10 @@ public class StaticAnalyzer {
 			IMethod nodeMethod = node.getMethod();
 			String nodeClassName = nodeMethod.getClass().getName().toString();
 			String nodeName = nodeMethod.getDeclaringClass().getName().toString();
-			
+
 			boolean isFunctionDefinition = nodeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
 			boolean isApplicationCode = !nodeName.startsWith(StaticAnalyzer.FAKE_ROOT_NODE);
-			
+
 			if (isFunctionDefinition && isApplicationCode) {
 				// Build variable name mapping
 				getCGNodeVariableNameMapping(node, nodeName, nodeMethod, false);
@@ -133,13 +132,13 @@ public class StaticAnalyzer {
 				cgNodePositions.put(nodeName,nodePosition);
 			}
 		}
-		
+
 		if (DEBUG) {
 			DebugUtil.printDebugMessage("[VariableNameMapping Size] " + variableNameMapping.size());
 		}
 		getAliasAnalysisResult();
 	}
-	
+
 	private void initializeConstructorNameMapping() {
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LObject", "Object");
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LFunction", "Function");
@@ -150,7 +149,7 @@ public class StaticAnalyzer {
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LNumber", "Number");
 		LANG_CONSTRUCTOR_NAME_MAPPING.put("LRegExp", "RegExp");
 	}
-	
+
 	private SourcePosition getCGNodePosition(IR ir, IMethod method) {
 
 		SourcePosition pos = null;
@@ -178,23 +177,23 @@ public class StaticAnalyzer {
 		}
 		return pos;
 	}
-		
+
 	private HashMap<SSAVariable, String> getCGNodeVariableNameMapping(
 			CGNode node, String nodeName, IMethod method, boolean includeScope) {
-		
+
 		if (node == null) {
 			return null;
 		}
 
 		HashMap<SSAVariable, String> nodeVariableNameMapping = new HashMap<SSAVariable, String>();
-		
+
 		IR ir = node.getIR();
 		SSAInstruction[] ssai = ir.getInstructions();
-		for (int i = 0; i < ssai.length; i++) {		
+		for (int i = 0; i < ssai.length; i++) {
 			if (ssai[i] == null) {
 				continue;
 			}
-						
+
 			for (int j = 0; j < ssai[i].getNumberOfDefs(); j++) {
 				int def_vn = ssai[i].getDef(j);
 				String[] ln = ir.getLocalNames(i, def_vn);
@@ -216,10 +215,10 @@ public class StaticAnalyzer {
 					}
 				}
 			}
-			
+
 			// We enumerate every type of SSA instruction to make sure we never miss one type
 			if (ssai[i] instanceof AstGlobalRead) {
-				
+
 				int vn = ((AstGlobalRead) ssai[i]).getDef();
 				SSAVariable var = new SSAVariable(nodeName, vn);
 				String[] gn = ((AstGlobalRead) ssai[i]).getGlobalName().split(" ");
@@ -230,9 +229,9 @@ public class StaticAnalyzer {
 				} else {
 					ErrorUtil.printErrorMessage("Failed to parse AstGlobalRead instruction.");
 				}
-				
+
 			} else if (ssai[i] instanceof AstGlobalWrite) {
-				
+
 				int vn = ((AstGlobalWrite) ssai[i]).getVal();
 				SSAVariable var = new SSAVariable(nodeName, vn);
 				String[] gn = ((AstGlobalWrite) ssai[i]).getGlobalName().split(" ");
@@ -243,7 +242,7 @@ public class StaticAnalyzer {
 				} else {
 					ErrorUtil.printErrorMessage("Failed to parse AstGlobalWrite instruction.");
 				}
-				
+
 			} else if (ssai[i] instanceof AstLexicalRead) {
 
 				Access[] access = ((AstLexicalRead) ssai[i]).getAccesses();
@@ -254,12 +253,12 @@ public class StaticAnalyzer {
 					SSAVariable var = new SSAVariable(nodeName, vn);
 					putVariableNameMappingEntry(nodeVariableNameMapping, var, ln, scope, includeScope);
 				}
-				
+
 			} else if (ssai[i] instanceof SSANewInstruction) {
 				// class com.ibm.wala.cast.js.loader.JavaScriptLoader$1$1$4
 				// nothing needs to be done for this type
 			} else if (ssai[i] instanceof SSAPutInstruction) {
-				// class com.ibm.wala.cast.js.loader.JavaScriptLoader$1$1$5				
+				// class com.ibm.wala.cast.js.loader.JavaScriptLoader$1$1$5
 				SSAVariable objVar = new SSAVariable(nodeName, ((SSAPutInstruction) ssai[i]).getUse(0));
 				String objName = nodeVariableNameMapping.get(objVar);
 				if (objName == null) {
@@ -272,23 +271,23 @@ public class StaticAnalyzer {
 				// System.out.println(ssai[i].getClass() + "\t" + ssai[i]);
 			}
 		}
-		
+
 		this.variableNameMapping.putAll(nodeVariableNameMapping);
 		return nodeVariableNameMapping;
 	}
-	
+
 	private void putVariableNameMappingEntry (HashMap<SSAVariable, String> nodeVariableNameMapping, SSAVariable var, String localName, String scope, boolean includeScope) {
 		if (includeScope) {
 			nodeVariableNameMapping.put(var, localName + "@" + scope);
 		} else {
 			nodeVariableNameMapping.put(var, localName);
-		}	
+		}
 	}
-	
+
 	private void getAliasAnalysisResult() {
-		
+
 		boolean DEBUG = false;
-		
+
 		if (this.pa == null) {
 			ErrorUtil.printErrorMessage("Alias analysis result is null.");
 			return;
@@ -297,7 +296,7 @@ public class StaticAnalyzer {
 		HeapGraph hg = pa.getHeapGraph();
 		Iterator<PointerKey> iter_pks = pa.getPointerKeys().iterator();
 		while (iter_pks.hasNext()) {
-			PointerKey pk = (PointerKey) iter_pks.next();
+			PointerKey pk = iter_pks.next();
 			if (pk instanceof LocalPointerKey) {
 				String methodName = ((LocalPointerKey) pk).getNode().getMethod().getDeclaringClass().getName().toString();
 				int vn = ((LocalPointerKey) pk).getValueNumber();
@@ -307,7 +306,7 @@ public class StaticAnalyzer {
 				}
 				if (!this.aliasAnalysisResult.containsKey(variable)) {
 					HashSet<SSAVariable> aliasSet = new HashSet<SSAVariable>();
-										
+
 					Iterator<Object> iter_spks = hg.getSuccNodes(pk);
 					while (iter_spks.hasNext()) {
 						Iterator<Object> iter_ppks = hg.getPredNodes(iter_spks.next());
@@ -325,7 +324,7 @@ public class StaticAnalyzer {
 							}
 						}
 					}
-					
+
 					if (aliasSet.size() > 0) {
 						aliasSet.add(variable);
 						Iterator<SSAVariable> iter_as = aliasSet.iterator();
@@ -338,19 +337,19 @@ public class StaticAnalyzer {
 			}
 		}
 	}
-	
+
 	private String getCGNodeFunctionName(String declaringName)
 	{
 		String functionName = null;
 		String[] functionNameArray = declaringName.split("/");
-		
+
 		// Parse function name
 		if (functionNameArray != null && functionNameArray.length > 0) {
 			functionName = functionNameArray[functionNameArray.length - 1];
 		} else {
 			ErrorUtil.printErrorMessage("Unexpected function name format.");
 		}
-		
+
 		String trueName = StaticAnalyzer.LANG_CONSTRUCTOR_NAME_MAPPING.get(functionName);
 		if(trueName != null){
 			return trueName;
@@ -358,14 +357,14 @@ public class StaticAnalyzer {
 			return functionName;
 		}
 	}
-	
+
 	protected class FunctionInvocationAnalyzer {
 
 		private static final boolean DEBUG = false;
-		
-		private HashSet<String> walaNodeFilter = new HashSet<String>();
-		private HashMap<String, HashSet<Suspect>> suspectAliasIndex = new HashMap<String, HashSet<Suspect>>();
-		
+
+		private final HashSet<String> walaNodeFilter = new HashSet<String>();
+		private final HashMap<String, HashSet<Suspect>> suspectAliasIndex = new HashMap<String, HashSet<Suspect>>();
+
 		private void initialzeNodeFilter() {
 			walaNodeFilter.add("make_node0");
 			walaNodeFilter.add("make_node1");
@@ -373,73 +372,73 @@ public class StaticAnalyzer {
 			walaNodeFilter.add("make_node3");
 			walaNodeFilter.add("make_node4");
 		}
-				
+
 		private SuspectList getAllSuspects(CallGraph cg, PointerAnalysis pa) {
-			
+
 			initialzeNodeFilter();
 			SuspectList sl = new SuspectList();
 			// Iterate over all CG nodes to build SuspectList
 			for (CGNode callerNode : cg) {
-				
+
 				IMethod callerMethod = callerNode.getMethod();
 				String callerClassName = callerMethod.getClass().getName().toString();
 				String callerNodeName = callerMethod.getDeclaringClass().getName().toString();
 				String callerFunctionName = getCGNodeFunctionName(callerNodeName);
-				
+
 				boolean isFunctionDefinition = callerClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
-				boolean isApplicationCode = !callerNodeName.startsWith(WALA_PROLOGUE) 
+				boolean isApplicationCode = !callerNodeName.startsWith(WALA_PROLOGUE)
 											&& !callerNodeName.startsWith(WALA_PREAMBLE)
 											&& !callerNodeName.startsWith(FAKE_ROOT_NODE);
 				boolean isWALASpecificCaller = walaNodeFilter.contains(callerFunctionName);
 				boolean isMainNode = callerFunctionName.equals(FAKE_MAIN_NODE);
 				boolean isWrapperNode = (callerNodeName.split("/").length == 1);
-				
-				
+
+
 				if (isFunctionDefinition && isApplicationCode && !isWALASpecificCaller && !isWrapperNode) {
-					
+
 					if (DEBUG) {
 						DebugUtil.printSeparationLine();
 						DebugUtil.printDebugMessage("[Caller Function]\t" + callerFunctionName);
 						DebugUtil.printCGNodeDefinedAndUsed(callerNode);
 					}
-					
+
 					SourcePosition callerPosition = cgNodePositions.get(callerNodeName);
-					
+
 					if (callerPosition == null) {
 						ErrorUtil.printErrorMessage("Failed to identify CG node postition.");
 					}
-					
+
 					IR callerIR = callerNode.getIR();
-					Iterator<CallSiteReference> iter_csr = callerIR.iterateCallSites();			
+					Iterator<CallSiteReference> iter_csr = callerIR.iterateCallSites();
 					while (iter_csr.hasNext()) {
-						
+
 						CallSiteReference csr = iter_csr.next();
 						Iterator<CGNode> targets = cg.getPossibleTargets(callerNode, csr).iterator();
 						while (targets.hasNext()) {
-							
-							CGNode calleeNode = (CGNode) targets.next();
+
+							CGNode calleeNode = targets.next();
 							IMethod calleeMethod = calleeNode.getMethod();
 							String calleeClassName = calleeMethod.getClass().getName().toString();
-							String calleeNodeName = calleeNode.getMethod().getDeclaringClass().getName().toString(); 
+							String calleeNodeName = calleeNode.getMethod().getDeclaringClass().getName().toString();
 							String calleeFunctionName = getCGNodeFunctionName(calleeNodeName);
 							isFunctionDefinition = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.loader.JavaScriptLoader$JavaScriptMethodObject");
 							boolean isConstructor = calleeClassName.equalsIgnoreCase("com.ibm.wala.cast.js.ipa.callgraph.JavaScriptConstructTargetSelector$JavaScriptConstructor");
 							boolean isAnonymous = (calleeFunctionName.split("@").length == 2);
 							boolean isLanguageConstructor = StaticAnalyzer.LANG_CONSTRUCTOR_NAME_MAPPING.containsValue(calleeFunctionName);
 							boolean isWALASpecificCallee = walaNodeFilter.contains(calleeFunctionName);
-							
+
 							if (isMainNode && isWALASpecificCallee) {
 								continue;
 							}
-							
+
 							//TODO: Need to investigate the dispatch case;
 							SSAInstruction[] callerInstructions = callerIR.getInstructions();
 							SourcePosition calleePosition = cgNodePositions.get(calleeNodeName);
-							
+
 							if (calleePosition == null && !isLanguageConstructor) {
 								ErrorUtil.printErrorMessage("Failed to identify CG node postition.");
 							}
-													
+
 							IntSet is = callerIR.getCallInstructionIndices(csr);
 							IntIterator iter_is = is.intIterator();
 							while (iter_is.hasNext()) {
@@ -447,7 +446,7 @@ public class StaticAnalyzer {
 								JavaScriptInvoke instruction = (JavaScriptInvoke) callerInstructions[ssaIndex];
 								int argCount = instruction.getNumberOfParameters() - 2;
 								SSAVariable funcVar = new SSAVariable(callerNodeName, instruction.getFunction());
-								
+
 								//TODO: Should investigate why sometimes the var name is either null or in strange format
 								if (DEBUG) {
 									DebugUtil.printDebugMessage(" [Referred Function Name] " + variableNameMapping.get(funcVar) + "\n");
@@ -464,12 +463,11 @@ public class StaticAnalyzer {
 										System.out.println("");
 									}
 								}
-																							
+
 								CAstSourcePositionMap.Position p = ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
 								if(p!=null){
-									Suspect fis = new Suspect(new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()));									
+									Suspect fis = new Suspect(new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()), SuspectType.FUNCTION_INVOCATION_SUSPECT);
 									sl.add(fis);
-									fis.setType(SuspectType.FUNCTION_INVOCATION_SUSPECT);
 									fis.setAttribute(PropertyName.CALLER_NAME, callerFunctionName);
 									fis.setAttribute(PropertyName.CALLER_WALA_NAME, callerNodeName);
 									if (callerPosition != null) {
@@ -477,14 +475,14 @@ public class StaticAnalyzer {
 										fis.attributes.put(PropertyName.CALLER_START_OFFSET, callerPosition.getStartOffset());
 										fis.attributes.put(PropertyName.CALLER_END_OFFSET, callerPosition.getEndOffset());
 									}
-									
+
 									if(isAnonymous) {
 										fis.setAttribute(PropertyName.CALLEE_NAME, "");
 									}
 									else {
 										fis.setAttribute(PropertyName.CALLEE_NAME, calleeFunctionName);
 									}
-									
+
 									fis.setAttribute(PropertyName.CALLEE_WALA_NAME, calleeNodeName);
 									if (calleePosition != null) {
 										fis.attributes.put(PropertyName.CALLEE_URL, callerPosition.getURLString());
@@ -493,14 +491,14 @@ public class StaticAnalyzer {
 									}
 									fis.setAttribute(PropertyName.ARGUMENT_COUNT, argCount);
 									fis.setAttribute(PropertyName.IS_CONSTRUCTOR, isConstructor);
-									
+
 									HashSet<Suspect> aliasSuspectSet = suspectAliasIndex.get(calleeNodeName);
 									if(aliasSuspectSet == null) {
 										aliasSuspectSet = new HashSet<Suspect>();
 										suspectAliasIndex.put(calleeNodeName, aliasSuspectSet);
 									}
 									aliasSuspectSet.add(fis);
-									
+
 									if (DEBUG) {
 										DebugUtil.printDebugMessage("[Created Function Invocation Suspect]\t" + calleeFunctionName);
 										System.out.println(fis.toString()+"\n");
@@ -511,16 +509,16 @@ public class StaticAnalyzer {
 					}
 				}
 			}
-			
+
 			Iterator<Suspect> iter_sl = sl.iterator();
 			while (iter_sl.hasNext()) {
-				Suspect fis = (Suspect) iter_sl.next();
+				Suspect fis = iter_sl.next();
 				HashSet<Suspect> aliasSuspectSet = suspectAliasIndex.get(fis.getAttribute(PropertyName.CALLEE_WALA_NAME));
 				if (aliasSuspectSet != null && aliasSuspectSet.size() > 1) {
 					fis.setAttribute(PropertyName.ALIAS_SUSPECT, aliasSuspectSet);
 				}
 			}
-			
+
 			return sl;
 		}
 	}

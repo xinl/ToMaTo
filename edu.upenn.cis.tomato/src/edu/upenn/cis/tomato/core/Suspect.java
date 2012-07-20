@@ -17,8 +17,9 @@ public class Suspect {
 	protected SuspectType type;
 	protected Map<PropertyName, Object> attributes = new HashMap<PropertyName, Object>();
 
-	public Suspect(SourcePosition sitePos) {
+	public Suspect(SourcePosition sitePos, SuspectType type) {
 		this.sitePos = sitePos;
+		this.type = type;
 		attributes.put(PropertyName.SITE_URL, sitePos.getURLString());
 		attributes.put(PropertyName.SITE_START_OFFSET, sitePos.getStartOffset());
 		attributes.put(PropertyName.SITE_END_OFFSET, sitePos.getEndOffset());
@@ -35,22 +36,18 @@ public class Suspect {
 	public void setAttribute(PropertyName name, Object value) {
 		attributes.put(name, value);
 	}
-	
+
 	public SuspectType getType() {
 		return type;
-	}
-
-	public void setType(SuspectType type) {
-		this.type = type;
 	}
 
 	public String toSignatureString() {
 		return "[Suspect Signature] [Position] " + sitePos + "\t[Type] " + type + "\n";
 	}
-	
+
 	@Override
 	public String toString() {
-		
+
 		String result = this.toSignatureString() + "===== Attribute List =====\n";
 		Iterator<Entry<PropertyName, Object>> iter_attr = attributes.entrySet().iterator();
 		while (iter_attr.hasNext()) {
@@ -59,9 +56,10 @@ public class Suspect {
 			Object value = entry.getValue();
 			if (!name.equals(PropertyName.ALIAS_SUSPECT)) {
 				result = result + "[" + name + "] " + value + "\n";
-			} 
+			}
 		}
-		
+
+		@SuppressWarnings("unchecked")
 		HashSet<Suspect> aliasSet = (HashSet<Suspect>) attributes.get(PropertyName.ALIAS_SUSPECT);
 		if(aliasSet != null) {
 			result = result + "===== Alias Suspect =====\n";
@@ -69,7 +67,7 @@ public class Suspect {
 			while (iter_as.hasNext()) {
 				result = result + iter_as.next().toSignatureString();
 			}
-		}		
+		}
 		return result;
 	}
 
