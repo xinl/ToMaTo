@@ -101,11 +101,22 @@ public class Suspect {
 	}
 
 	public enum SuspectType {
-		FUNCTION_INVOCATION;
+		FUNCTION_INVOCATION("FunctionInvocation");
+
+		protected String string;
+
+		SuspectType(String string) {
+			this.string = string;
+		}
 
 		public static SuspectType fromString(String str) {
 			str = str.replaceAll("([^A-Z])([A-Z])", "$1_$2").toUpperCase();
 			return valueOf(str);
+		}
+
+		@Override
+		public String toString() {
+			return string;
 		}
 	}
 }

@@ -16,7 +16,7 @@ import edu.upenn.cis.tomato.core.PolicyTerm;
 public class PolicyTest {
 
 	String[] ps = {
-			"ActionType == \"invoke\" & (CallerName == \"alert\" | CallerName == \"foo.bar\") & TimeInvoked > 10 : custom(\"code\")",
+			"SuspectType == \"FunctionInvocation\" & (CallerName == \"alert\" | CallerName == \"foo.bar\") & TimeInvoked > 10 : custom(\"code\")",
 			"(CallerName == \"eval\" | CallerName == \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
 			"! ! ! (! CallerName == \"alert\" & CallerName == \"foo.bar\") | ! TimeInvoked >= 10 : custom(\"{foo}\")",
 			"SiteStartOffset > 0 : prohibit"
@@ -24,7 +24,7 @@ public class PolicyTest {
 
 	String[] bad_ps = {
 			// bad operators
-			"ActionType == \"invoke\" && (CallerName <> \"alert\" || CallerName == \"foo.bar\") : custom(\"code\")",
+			"SuspectType == \"FunctionInvocation\" && (CallerName <> \"alert\" || CallerName == \"foo.bar\") : custom(\"code\")",
 			// bad names
 			"(1CallerName == \"alert\" | -CallerName == \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
 			// incomplete

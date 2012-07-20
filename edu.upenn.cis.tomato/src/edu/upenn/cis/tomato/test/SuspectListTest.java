@@ -54,6 +54,10 @@ public class SuspectListTest {
 
 		SuspectList sp1 = new SuspectList(sp);
 
+		Suspect[] expect0 = {s[0], s[1], s[2], s[3], s[4]};
+		sp1.filter(new PolicyTerm(PropertyName.SUSPECT_TYPE, ComparatorType.EQUAL, SuspectType.FUNCTION_INVOCATION));
+		assertTrue(matches(expect0, sp1));
+
 		Suspect[] expect1 = {s[2], s[3], s[4]};
 		sp1.filter(new PolicyTerm(PropertyName.SITE_URL, ComparatorType.EQUAL, "http://e.com/a.js"));
 		assertTrue(matches(expect1, sp1));

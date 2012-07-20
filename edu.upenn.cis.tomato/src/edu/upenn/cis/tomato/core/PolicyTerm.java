@@ -128,7 +128,7 @@ public class PolicyTerm {
 	@Override
 	public String toString() {
 		String valueString = "";
-		if (value instanceof String) {
+		if (value instanceof String || propertyName == PropertyName.SUSPECT_TYPE) {
 			valueString = "\"" + value + "\"";
 		} else {
 			valueString = value.toString();
