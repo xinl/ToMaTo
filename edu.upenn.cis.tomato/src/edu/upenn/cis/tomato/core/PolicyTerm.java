@@ -8,19 +8,19 @@ public class PolicyTerm {
 	public PolicyTerm(String propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
 		this(PropertyName.fromString(propertyName), comparator, value);
 	}
-	
+
 	public PolicyTerm(PropertyName propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
 		this.propertyName = propertyName;
 		this.comparator = comparator;
 		this.value = value;
 	}
-	
+
 	public PolicyTerm(PolicyTerm term) {
 		this.propertyName = term.propertyName;
 		this.comparator = term.comparator;
 		this.value = term.value;
 	}
-	
+
 	public boolean isStatic() {
 		return propertyName.isStatic;
 	}
@@ -66,7 +66,7 @@ public class PolicyTerm {
 		}
 		return new PolicyTerm(propertyName, newComparator, value);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -111,9 +111,9 @@ public class PolicyTerm {
 		}
 		return "" + propertyName + " " + comparator + " " + valueString;
 	}
-	
-	public boolean appliesTo(Suspect suspect) {
-		Object o1 = suspect.getAttribute(propertyName);
+
+	public boolean appliesTo(Object suspectValue) {
+		Object o1 = suspectValue;
 		Object o2 = value;
 		int result;
 		if (o1 instanceof Comparable && o2 instanceof Comparable) {
@@ -127,7 +127,7 @@ public class PolicyTerm {
 				// two objects are of different type
 				return false;
 			}
-			
+
 			switch (comparator) {
 			case EQUAL:
 				return result == 0;
@@ -145,7 +145,7 @@ public class PolicyTerm {
 		}
 		return false;
 	}
-	
+
 	public enum ComparatorType {
 		EQUAL				("="),
 		UNEQUAL				("!="),
@@ -153,18 +153,19 @@ public class PolicyTerm {
 		LESS_THAN			("<"),
 		GREATER_EQUAL_THAN	(">="),
 		LESS_EQUAL_THAN		("<=");
-		
+
 		private final String string;
-		
+
 		ComparatorType(String string) {
 			this.string = string;
 		}
-		
+
+		@Override
 		public String toString() {
 			return string;
 		}
 	}
-	
+
 	public enum PropertyName {
 		// static properties
 		ACTION_TYPE("ActionType", true),
@@ -187,20 +188,21 @@ public class PolicyTerm {
 		IS_CONSTRUCTOR("IsConstructor", true),
 		// dynamic properties
 		TIME_INVOKED("TimeInvoked", false);
-		
+
 		private String string;
 		private boolean isStatic;
-		
+
 		PropertyName(String string, boolean isStatic) {
 			this.string = string;
 			this.isStatic = isStatic;
 		}
-		
+
 		static public PropertyName fromString(String str) {
 			str = str.replaceAll("([^A-Z])([A-Z])", "$1_$2").toUpperCase();
 			return valueOf(str);
 		}
-		
+
+		@Override
 		public String toString() {
 			return string;
 		}

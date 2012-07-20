@@ -8,10 +8,10 @@ import java.util.Set;
 /**
  * A collection of Suspects that supports filtering and logic operation: union,
  * difference and intersection.
- * 
+ *
  * @author Xin Li
  * @version July 11, 2012
- * 
+ *
  */
 public class SuspectList implements Set<Suspect> {
 	/*
@@ -26,7 +26,7 @@ public class SuspectList implements Set<Suspect> {
 
 	/**
 	 * Copy constructor
-	 * 
+	 *
 	 * @param otherList
 	 *            The SuspectList to copy from.
 	 */
@@ -36,18 +36,18 @@ public class SuspectList implements Set<Suspect> {
 
 	/**
 	 * Remove all Suspect that do not satisfy the given PolicyTerm.
-	 * 
+	 *
 	 * @param filter
 	 *            The PolicyTerm to used as filtering criterion.
 	 */
 	public void filter(PolicyTerm filter) {
 		for (Suspect s : suspects) {
-			if (!filter.appliesTo(s)) {
+			if (!filter.appliesTo(s.getAttribute(filter.getPropertyName()))) {
 				remove(s);
 			}
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return suspects.toString();
