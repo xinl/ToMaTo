@@ -16,9 +16,9 @@ import edu.upenn.cis.tomato.core.PolicyTerm;
 public class PolicyTest {
 
 	String[] ps = {
-			"ActionType = \"invoke\" & (CallerName = \"alert\" | CallerName = \"foo.bar\") & TimeInvoked > 10 : custom(\"code\")",
-			"(CallerName = \"eval\" | CallerName = \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
-			"! ! ! (! CallerName = \"alert\" & CallerName = \"foo.bar\") | ! TimeInvoked >= 10 : custom(\"{foo}\")",
+			"ActionType == \"invoke\" & (CallerName == \"alert\" | CallerName == \"foo.bar\") & TimeInvoked > 10 : custom(\"code\")",
+			"(CallerName == \"eval\" | CallerName == \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
+			"! ! ! (! CallerName == \"alert\" & CallerName == \"foo.bar\") | ! TimeInvoked >= 10 : custom(\"{foo}\")",
 			"SiteStartOffset > 0 : prohibit"
 	};
 
@@ -26,11 +26,11 @@ public class PolicyTest {
 			// bad operators
 			"ActionType == \"invoke\" && (CallerName <> \"alert\" || CallerName == \"foo.bar\") : custom(\"code\")",
 			// bad names
-			"(1CallerName = \"alert\" | -CallerName = \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
+			"(1CallerName == \"alert\" | -CallerName == \"foo.bar\") & TimeInvoked >= -10.2 : prohibit",
 			// incomplete
 			"TimeInvoked < 3",
 			// bad action argument
-			"! ! ! (! CallerName = \"alert\" & CallerName = \"foo.bar\") | ! TimeInvoked >= 10 : custom(22)" };
+			"! ! ! (! CallerName == \"alert\" & CallerName == \"foo.bar\") | ! TimeInvoked >= 10 : custom(22)" };
 
 	@Before
 	public void setUp() throws Exception {
@@ -45,7 +45,7 @@ public class PolicyTest {
 			assertEquals(p, pn.toString());
 		}
 	}
-	
+
 	@Test
 	public void testBadPolicyString() {
 		for (String p : bad_ps) {
@@ -55,11 +55,11 @@ public class PolicyTest {
 				//System.out.println(pn.toString());
 				fail("No exception thown on bad input.");
 			} catch (ParseException e) {
-				
+
 			}
 		}
 	}
-	
+
 	@Test
 	public void testPolicyGetRawDNF() throws ParseException {
 		for (String p : ps) {
@@ -79,7 +79,7 @@ public class PolicyTest {
 				{2, 1},
 				{1, 0}
 		};
-		
+
 		for (int i = 0; i < ps.length; i++) {
 			Policy p = new Policy(ps[i]);
 			Set<Set<PolicyTerm>> staticTerms = p.getStaticTermGroups();
@@ -88,9 +88,9 @@ public class PolicyTest {
 			System.out.println("Dynamic:" + dynamicTerms);
 			assertEquals(expected[i][0], staticTerms.size());
 			assertEquals(expected[i][1], dynamicTerms.size());
-			
+
 		}
-		
+
 	}
 
 }

@@ -1,5 +1,15 @@
 package edu.upenn.cis.tomato.core;
 
+/**
+ * A condition used in Policy to match qualified Suspects. A PolicyTerm consists
+ * of three parts: a PropertyName referring to an attribute in Suspects, a
+ * comparator and a value to express the requirement of such attribute. An
+ * example PolicyTerm may express the condition of
+ * <code>SiteStartOffset >= 2</code>.
+ *
+ * @author Xin Li
+ * @version July 20, 2012
+ */
 public class PolicyTerm {
 	protected PropertyName propertyName;
 	protected ComparatorType comparator;
@@ -15,12 +25,23 @@ public class PolicyTerm {
 		this.value = value;
 	}
 
+	/**
+	 * Copy constructor
+	 *
+	 * @param term
+	 */
 	public PolicyTerm(PolicyTerm term) {
 		this.propertyName = term.propertyName;
 		this.comparator = term.comparator;
 		this.value = term.value;
 	}
 
+	/**
+	 * Return whether this term is a static term. A static term is a term with a
+	 * static PropertyName. (see definition of PropertyName)
+	 *
+	 * @return true if the term is static, otherwise return false.
+	 */
 	public boolean isStatic() {
 		return propertyName.isStatic;
 	}
@@ -38,7 +59,10 @@ public class PolicyTerm {
 	}
 
 	/**
-	 * Apply NOT to this term. e.g. <= becomes >
+	 * Return a new PolicyTerm whose comparator is negated. (e.g.: <= becomes >,
+	 * == becomes !=)
+	 *
+	 * @return A negated PolicyTerm
 	 */
 	public PolicyTerm negate() {
 		ComparatorType newComparator = null;
@@ -62,7 +86,7 @@ public class PolicyTerm {
 			newComparator = ComparatorType.GREATER_THAN;
 			break;
 		default:
-			assert(false);
+			assert (false);
 		}
 		return new PolicyTerm(propertyName, newComparator, value);
 	}
@@ -96,7 +120,7 @@ public class PolicyTerm {
 		if (value == null) {
 			if (other.value != null)
 				return false;
-		} else if (!value.equals(other.value)) // Can polymorphism take care of all types of value?
+		} else if (!value.equals(other.value)) // Polymorphism should take care of comparison of all types of value?
 			return false;
 		return true;
 	}
@@ -112,6 +136,15 @@ public class PolicyTerm {
 		return "" + propertyName + " " + comparator + " " + valueString;
 	}
 
+	/**
+	 * Return whether this PolicyTerm applies to a specific value. For example,
+	 * the term "SiteStartOffset > 3" applies to a suspect value of integer 4,
+	 * but does not apply to integer 2.
+	 *
+	 * @param suspectValue
+	 *            The value to be tested under this term.
+	 * @return true if the term applies to the value, otherwise return false.
+	 */
 	public boolean appliesTo(Object suspectValue) {
 		Object o1 = suspectValue;
 		Object o2 = value;
@@ -147,12 +180,12 @@ public class PolicyTerm {
 	}
 
 	public enum ComparatorType {
-		EQUAL				("="),
-		UNEQUAL				("!="),
-		GREATER_THAN		(">"),
-		LESS_THAN			("<"),
-		GREATER_EQUAL_THAN	(">="),
-		LESS_EQUAL_THAN		("<=");
+		EQUAL("=="),
+		UNEQUAL("!="),
+		GREATER_THAN(">"),
+		LESS_THAN("<"),
+		GREATER_EQUAL_THAN(">="),
+		LESS_EQUAL_THAN("<=");
 
 		private final String string;
 

@@ -12,28 +12,28 @@ import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
 
 /**
  * A Parser for converting policy string into a binary tree of PolicyNodes.
- * 
+ *
  * Policy string grammar:
- * 
+ *
  * <pre>
  * <policy> := <disjunction> ":" <action>
- * 
+ *
  * <disjunction> := <conjunction> {"|" <disjunction>}
  * <conjunction> := <negation> {"&" <conjunction>}
  * <negation> := <atom> | "!" <negation>
  * <atom> := "(" <disjunction> ")" | <term>
- * 
+ *
  * <term> := <name> <comparator> <value>
- * <comparator> := "=" | "!=" | ">" | "<" | ">=" | "<="
+ * <comparator> := "==" | "!=" | ">" | "<" | ">=" | "<="
  * <value> := <float> | <integer> | <string>
- * 
+ *
  * <action> := <name> {"(" <string> ")"}
  * </pre>
- * 
+ *
  * Priority of logic operators: ! > & > |
- * 
+ *
  * @author Xin Li
- * 
+ *
  */
 public class PolicyParser {
 	protected String input;
@@ -213,7 +213,7 @@ public class PolicyParser {
 	/**
 	 * Test whether next token is of a given type. This method does not move the
 	 * cursor and does not consume any token.
-	 * 
+	 *
 	 * @param type
 	 *            the expected type of next token
 	 * @return True if next token is of the given type, otherwise, False.
@@ -226,7 +226,7 @@ public class PolicyParser {
 	/**
 	 * Turn the first ROOT, AND, OR, NOT token after cursor point into a
 	 * PolicyNode and put it on stack.
-	 * 
+	 *
 	 * @param type
 	 *            the type of the token to consume
 	 * @throws ParseException
@@ -298,7 +298,7 @@ public class PolicyParser {
 		OR("\\|"),
 		NOT("!"),
 		NAME("[a-zA-Z_][\\w\\.]*"),
-		COMPARATOR("(?:[!><]=)|[=<>]"),
+		COMPARATOR("(?:[!><=]=)|[<>]"),
 		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using \ (Friedl's: "unrolling-the-loop" technique)
 		INTEGER("-?\\d+"),
 		FLOAT("-?\\d+\\.\\d+"),
