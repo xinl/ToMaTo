@@ -18,7 +18,7 @@ public class SuspectList implements Set<Suspect> {
 	 * Here we use composition instead of inheritance because future feature and
 	 * optimization may require we use data structure other than HashSet.
 	 */
-	Set<Suspect> suspects = new HashSet<Suspect>();
+	protected Set<Suspect> suspects = new HashSet<Suspect>();
 
 	public SuspectList() {
 

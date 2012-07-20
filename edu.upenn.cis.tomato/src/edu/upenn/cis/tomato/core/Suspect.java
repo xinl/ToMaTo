@@ -23,6 +23,7 @@ public class Suspect {
 		attributes.put(PropertyName.SITE_URL, sitePos.getURLString());
 		attributes.put(PropertyName.SITE_START_OFFSET, sitePos.getStartOffset());
 		attributes.put(PropertyName.SITE_END_OFFSET, sitePos.getEndOffset());
+		attributes.put(PropertyName.SUSPECT_TYPE, type);
 	}
 
 	public SourcePosition getPosition() {
@@ -99,7 +100,12 @@ public class Suspect {
 		return true;
 	}
 
-	enum SuspectType {
-		FUNCTION_INVOCATION_SUSPECT
+	public enum SuspectType {
+		FUNCTION_INVOCATION;
+
+		public static SuspectType fromString(String str) {
+			str = str.replaceAll("([^A-Z])([A-Z])", "$1_$2").toUpperCase();
+			return valueOf(str);
+		}
 	}
 }

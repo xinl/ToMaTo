@@ -201,7 +201,7 @@ public class PolicyTerm {
 
 	public enum PropertyName {
 		// static properties
-		ACTION_TYPE("ActionType", true),
+		SUSPECT_TYPE("SuspectType", true),
 		ALIAS_SUSPECT("AliasSuspect", true),
 		ARGUMENT_COUNT("ArgumentCount", true),
 		SITE_NAME("SiteName", true),

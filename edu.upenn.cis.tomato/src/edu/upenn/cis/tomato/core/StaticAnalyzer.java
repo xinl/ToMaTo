@@ -466,7 +466,7 @@ public class StaticAnalyzer {
 
 								CAstSourcePositionMap.Position p = ((AstMethod) callerMethod).getSourcePosition(ssaIndex);
 								if(p!=null){
-									Suspect fis = new Suspect(new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()), SuspectType.FUNCTION_INVOCATION_SUSPECT);
+									Suspect fis = new Suspect(new SourcePosition(p.getURL(), p.getFirstOffset(), p.getLastOffset()), SuspectType.FUNCTION_INVOCATION);
 									sl.add(fis);
 									fis.setAttribute(PropertyName.CALLER_NAME, callerFunctionName);
 									fis.setAttribute(PropertyName.CALLER_WALA_NAME, callerNodeName);

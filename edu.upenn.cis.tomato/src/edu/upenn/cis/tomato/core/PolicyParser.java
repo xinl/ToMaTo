@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 
 import edu.upenn.cis.tomato.core.PolicyNode.NodeType;
 import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
+import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
+import edu.upenn.cis.tomato.core.Suspect.SuspectType;
 
 /**
  * A Parser for converting policy string into a binary tree of PolicyNodes.
@@ -122,14 +124,16 @@ public class PolicyParser {
 
 	protected void parseTerm() throws ParseException {
 		PolicyTerm term = null;
-		String name = parseName();
+		PropertyName name = PropertyName.fromString(parseName());
 		ComparatorType comp = parseComparator();
-		Object value = parseValue();
-		try {
-			term = new PolicyTerm(name, comp, value);
-		} catch (IllegalArgumentException e) {
-			error("Illegal term format: " + name);
+		Object value = null;
+		if (name == PropertyName.SUSPECT_TYPE) {
+			// Convert SuspectType string to SuspectType enum object
+			value = SuspectType.fromString((String) parseValue());
+		} else {
+			value = parseValue();
 		}
+		term = new PolicyTerm(name, comp, value);
 		PolicyNode node = new PolicyNode(PolicyNode.NodeType.TERM, term);
 		stack.push(node);
 	}

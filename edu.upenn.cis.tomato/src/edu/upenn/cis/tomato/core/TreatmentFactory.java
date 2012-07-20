@@ -129,7 +129,7 @@ public class TreatmentFactory {
 		
 		public String apply(String str, SuspectType suspectType, boolean isStatic) {
 			switch (suspectType) {
-			case FUNCTION_INVOCATION_SUSPECT:
+			case FUNCTION_INVOCATION:
 				return applyToFunctionInvocation(str, isStatic);
 			}
 			return null;
