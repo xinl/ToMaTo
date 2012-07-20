@@ -41,11 +41,13 @@ public class SuspectList implements Set<Suspect> {
 	 *            The PolicyTerm to used as filtering criterion.
 	 */
 	public void filter(PolicyTerm filter) {
+		Set<Suspect> markedForRemoval= new HashSet<Suspect>();
 		for (Suspect s : suspects) {
 			if (!filter.appliesTo(s.getAttribute(filter.getPropertyName()))) {
-				remove(s);
+				markedForRemoval.add(s);
 			}
 		}
+		removeAll(markedForRemoval);
 	}
 
 	@Override
