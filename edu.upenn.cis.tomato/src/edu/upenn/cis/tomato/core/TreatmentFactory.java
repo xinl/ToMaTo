@@ -8,19 +8,20 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
 import edu.upenn.cis.tomato.core.Suspect.SuspectType;
 
 public class TreatmentFactory {
 	public final String BASE_OBJECT_NAME = makeBaseObjectName();
 	static private final Pattern FUNCTION_INVOCATION_PATTERN = Pattern.compile("^([^\\(]+)\\((.*)\\)$", Pattern.DOTALL);
-	private List<String> definitions = new ArrayList<String>();
+	private final List<String> definitions = new ArrayList<String>();
 
 	private int count = 0;
 
 	public TreatmentFactory() {
 		definitions.add("function " + BASE_OBJECT_NAME + "() {}");
 	}
-	
+
 	public Treatment makeTreatment(Policy policy) {
 		// build definition
 		count++;
@@ -28,7 +29,7 @@ public class TreatmentFactory {
 		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (_static, _context, _func)";
 		Set<String> staticVars = new HashSet<String>();
 		Set<String> epilog = new HashSet<String>();
-		
+
 		// recreate original arguments array
 		String args = "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);";
 
@@ -40,9 +41,9 @@ public class TreatmentFactory {
 			cond += " || (";
 			for (PolicyTerm term : group) {
 				if (!term.isStatic()) { // all static terms are true and omitted
-					if (term.getPropertyName().equals("TimeInvoked")) {
-						cond += "this" + funcName + ".TimeInvoked " + term.getComparator() + " " + term.getValue() + " &&";
-						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimeInvoked = 0");
+					if (term.getPropertyName() == PropertyName.TIME_INVOKED) {
+						cond += "this." + funcName + ".TimeInvoked " + term.getComparator() + " " + term.getValue() + " &&";
+						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimeInvoked = 0;");
 						epilog.add("this." + funcName + ".TimeInvoked++;");
 					}
 				}
@@ -88,13 +89,11 @@ public class TreatmentFactory {
 		}
 
 		definitions.add(def);
-		
+
 		return new Treatment(BASE_OBJECT_NAME + "." + funcName);
 
 	}
 
-	
-	
 	public String getDefinitions() {
 		String defs = "";
 		for (String s : definitions) {
@@ -118,15 +117,15 @@ public class TreatmentFactory {
 		}
 		return encoded;
 	}
-	
+
 	public class Treatment {
 		// regex String to match within the suspect site
-		private String newFuncName;
-		
+		private final String newFuncName;
+
 		protected Treatment(String newFuncName) {
 			this.newFuncName = newFuncName;
 		}
-		
+
 		public String apply(String str, SuspectType suspectType, boolean isStatic) {
 			switch (suspectType) {
 			case FUNCTION_INVOCATION:
@@ -134,20 +133,24 @@ public class TreatmentFactory {
 			}
 			return null;
 		}
-		
+
 		protected String applyToFunctionInvocation(String str, boolean isStatic) {
 			Matcher matcher = FUNCTION_INVOCATION_PATTERN.matcher(str);
+			if (!matcher.matches()) {
+				System.err.println("No function invocation code found. Treatment aborted.");
+				return str;
+			}
 			String oldFuncName = matcher.group(1);
 			String oldArgs = matcher.group(2);
-			
+
 			String argStatic = (isStatic ? "true" : "false") + ", ";
 			int dotIndex = oldFuncName.lastIndexOf(".");
 			String argContext = (dotIndex >= 0 ? oldFuncName.substring(0, dotIndex) : "null") + ", ";
-			String argFunc = dotIndex >= 0 ? oldFuncName.substring(dotIndex + 1, oldFuncName.length()) : oldFuncName;
+			String argFunc = oldFuncName;
 			if (oldArgs.length() != 0) {
 				argFunc += ", ";
 			}
-			
+
 			return newFuncName + "(" + argStatic + argContext + argFunc + oldArgs + ")";
 		}
 	}
