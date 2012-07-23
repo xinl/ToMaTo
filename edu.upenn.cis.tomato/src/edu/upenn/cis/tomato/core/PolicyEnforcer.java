@@ -2,6 +2,8 @@ package edu.upenn.cis.tomato.core;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,18 +20,16 @@ public class PolicyEnforcer {
 	 * Build patch Lists from each Policies, combine them, then apply each patch
 	 * to designated positions in sourceBundle in one-pass.
 	 */
-	protected SourceBundle sourceBundle;
 	protected List<Policy> policies;
-	protected Comparator<Operation> sortByPosition = new SortByPosition();
+	protected final Comparator<Operation> SORT_BY_POSITION = new SortByPosition();
 	protected TreatmentFactory treatmentFactory = new TreatmentFactory();
 
-	public PolicyEnforcer(SourceBundle sourceBundle, List<Policy> policies) {
-		this.sourceBundle = sourceBundle;
-		this.policies = policies;
+	public PolicyEnforcer(Collection<Policy> policies) {
+		this.policies = new ArrayList<Policy>(policies);
 	}
 
-	public void enforce() {
-		SortedSet<Operation> operations = getAllOperations();
+	public void enforceOn(SourceBundle sourceBundle) {
+		SortedSet<Operation> operations = getAllOperations(sourceBundle, policies, new TreatmentFactory());
 
 		if (operations.size() == 0) {
 			return;
@@ -39,15 +39,15 @@ public class PolicyEnforcer {
 		Operation root = makeOperationTree(operations);
 
 		// carry out the operations
-		root.operate();
+		root.operateOn(sourceBundle);
 
 		// add the definition JS file to the beginning of web page
 		sourceBundle.addTreatmentDefinitions(treatmentFactory.BASE_OBJECT_NAME + ".js", treatmentFactory.getDefinitions());
 	}
 
-	protected SortedSet<Operation> getAllOperations() {
+	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle, Collection<Policy> policies, TreatmentFactory treatmentFactory) {
 		// use set to avoid multiple treatments on same site
-		SortedSet<Operation> operations = new TreeSet<Operation>(sortByPosition);
+		SortedSet<Operation> operations = new TreeSet<Operation>(SORT_BY_POSITION);
 
 		// fill in operations set
 
@@ -132,7 +132,7 @@ public class PolicyEnforcer {
 		protected Treatment treatment;
 		protected SortedSet<Operation> children;
 
-		public Operation(SourcePosition pos, SuspectType suspectType, boolean isStatic, Treatment treatment) {
+		protected Operation(SourcePosition pos, SuspectType suspectType, boolean isStatic, Treatment treatment) {
 			this.pos = pos;
 			this.suspectType = suspectType;
 			this.isStatic = isStatic;
@@ -141,18 +141,18 @@ public class PolicyEnforcer {
 
 		public void addChild(Operation op) {
 			if (children == null) {
-				children = new TreeSet<Operation>(sortByPosition);
+				children = new TreeSet<Operation>(SORT_BY_POSITION);
 			}
 			children.add(op);
 		}
 
-		public int operate() {
+		public int operateOn(SourceBundle sourceBundle) {
 			int lengthDiff = 0;
 
 			// carry out children operations first, if any
 			if (children != null) {
 				for (Operation op : children) {
-					int childLengthDiff = op.operate();
+					int childLengthDiff = op.operateOn(sourceBundle);
 					if (childLengthDiff != 0) {
 						// add diff to the start offsets of all subsequent sibling operations on the same URL
 						SortedSet<Operation> tailSet = children.tailSet(op);
@@ -257,7 +257,7 @@ public class PolicyEnforcer {
 		}
 	}
 
-	private class SortByPosition implements Comparator<Operation> {
+	protected class SortByPosition implements Comparator<Operation> {
 
 		@Override
 		public int compare(Operation a, Operation b) {

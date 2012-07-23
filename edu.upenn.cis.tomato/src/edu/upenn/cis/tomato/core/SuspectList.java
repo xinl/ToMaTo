@@ -120,4 +120,29 @@ public class SuspectList implements Set<Suspect> {
 		return suspects.toArray(a);
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((suspects == null) ? 0 : suspects.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SuspectList other = (SuspectList) obj;
+		if (suspects == null) {
+			if (other.suspects != null)
+				return false;
+		} else if (!suspects.equals(other.suspects))
+			return false;
+		return true;
+	}
+
 }
