@@ -2,6 +2,8 @@ package edu.upenn.cis.tomato.test;
 
 import static org.junit.Assert.*;
 
+import java.util.regex.Pattern;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,6 +33,8 @@ public class PolicyTermTest {
 		PolicyTerm pt4 = new PolicyTerm("SiteName", ComparatorType.LESS_THAN, "Blah.");
 		PolicyTerm pt5 = new PolicyTerm("SiteName", ComparatorType.GREATER_EQUAL_THAN, "Blah.");
 		PolicyTerm pt6 = new PolicyTerm("SiteName", ComparatorType.LESS_EQUAL_THAN, "Blah.");
+		PolicyTerm pt7 = new PolicyTerm("SiteName", ComparatorType.MATCHES, "Blah.");
+		PolicyTerm pt8 = new PolicyTerm("SiteName", ComparatorType.NOT_MATCHES, "Blah.");
 
 		assertEquals(pt2, pt1.negate());
 		assertEquals(pt1, pt2.negate());
@@ -38,12 +42,14 @@ public class PolicyTermTest {
 		assertEquals(pt5, pt4.negate());
 		assertEquals(pt4, pt5.negate());
 		assertEquals(pt3, pt6.negate());
+		assertEquals(pt8, pt7.negate());
+		assertEquals(pt7, pt8.negate());
 
 		assertNotSame(pt2, pt1.negate());
 	}
 
 	@Test
-	public void testEqualsObject() {
+	public void testEquals() {
 		PolicyTerm pt1 = new PolicyTerm("SiteName", ComparatorType.EQUAL, "Blah.");
 		PolicyTerm pt2 = new PolicyTerm("SiteName", ComparatorType.EQUAL, "Blah.");
 		PolicyTerm pt3 = new PolicyTerm("CallerName", ComparatorType.EQUAL, "Blah.");
@@ -62,6 +68,7 @@ public class PolicyTermTest {
 	public void testAppliesTo() {
 		PolicyTerm pt1 = new PolicyTerm("SiteName", ComparatorType.EQUAL, "Blah.");
 		PolicyTerm pt2 = new PolicyTerm("SiteStartOffset", ComparatorType.LESS_EQUAL_THAN, new Integer(3));
+		PolicyTerm pt3 = new PolicyTerm("SiteURL", ComparatorType.MATCHES, Pattern.compile(".*/a.js"));
 
 		assertTrue(pt1.appliesTo("Blah."));
 		assertTrue(pt1.appliesTo(new String("Blah.")));
@@ -73,6 +80,10 @@ public class PolicyTermTest {
 		assertTrue(pt2.appliesTo(new Integer(-3)));
 		assertFalse(pt2.appliesTo(new Integer(4)));
 		assertFalse(pt2.appliesTo("3"));
+
+		assertTrue(pt3.appliesTo("http://e.com/a.js"));
+		assertFalse(pt3.appliesTo("http://e.com/1.js"));
+		assertFalse(pt3.appliesTo(new Integer(4)));
 
 	}
 

@@ -127,11 +127,26 @@ public class PolicyParser {
 		PropertyName name = PropertyName.fromString(parseName());
 		ComparatorType comp = parseComparator();
 		Object value = null;
-		if (name == PropertyName.SUSPECT_TYPE) {
-			// Convert SuspectType string to SuspectType enum object
-			value = SuspectType.fromString((String) parseValue());
+		if (comp == ComparatorType.MATCHES || comp == ComparatorType.NOT_MATCHES) {
+			// .matches and .notMatches must be followed by parenthesis
+			if (peekToken(TokenType.LEFT_PAREN)) {
+				skipToken(TokenType.LEFT_PAREN);
+			} else {
+				error("Can't find expected \"(\".");
+			}
+			value = Pattern.compile((String) parseValue());
+			if (peekToken(TokenType.RIGHT_PAREN)) {
+				skipToken(TokenType.RIGHT_PAREN);
+			} else {
+				error("Unclosed parenthesis.");
+			}
 		} else {
-			value = parseValue();
+			if (name == PropertyName.SUSPECT_TYPE) {
+				// Convert SuspectType string to SuspectType enum object
+				value = SuspectType.fromString((String) parseValue());
+			} else {
+				value = parseValue();
+			}
 		}
 		term = new PolicyTerm(name, comp, value);
 		PolicyNode node = new PolicyNode(PolicyNode.NodeType.TERM, term);
@@ -302,8 +317,8 @@ public class PolicyParser {
 		OR("\\|"),
 		NOT("!"),
 		NAME("[a-zA-Z_][\\w\\.]*"),
-		COMPARATOR("(?:[!><=]=)|[<>]"),
-		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using \ (Friedl's: "unrolling-the-loop" technique)
+		COMPARATOR("(?:[!><=]=)|[<>]|(?:\\.matches)|(?:\\.notMatches)"),
+		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using Friedl's: "unrolling-the-loop" technique
 		INTEGER("-?\\d+"),
 		FLOAT("-?\\d+\\.\\d+"),
 		LEFT_PAREN("\\("),

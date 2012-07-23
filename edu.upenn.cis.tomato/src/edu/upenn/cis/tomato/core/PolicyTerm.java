@@ -1,5 +1,7 @@
 package edu.upenn.cis.tomato.core;
 
+import java.util.regex.Pattern;
+
 /**
  * A condition used in Policy to match qualified Suspects. A PolicyTerm consists
  * of three parts: a PropertyName referring to an attribute in Suspects, a
@@ -85,6 +87,12 @@ public class PolicyTerm {
 		case LESS_EQUAL_THAN:
 			newComparator = ComparatorType.GREATER_THAN;
 			break;
+		case MATCHES:
+			newComparator = ComparatorType.NOT_MATCHES;
+			break;
+		case NOT_MATCHES:
+			newComparator = ComparatorType.MATCHES;
+			break;
 		default:
 			assert (false);
 		}
@@ -133,7 +141,11 @@ public class PolicyTerm {
 		} else {
 			valueString = value.toString();
 		}
-		return "" + propertyName + " " + comparator + " " + valueString;
+		if (comparator == ComparatorType.MATCHES || comparator == ComparatorType.NOT_MATCHES) {
+			return "" + propertyName + comparator + "(" + valueString + ")";
+		} else {
+			return "" + propertyName + " " + comparator + " " + valueString;
+		}
 	}
 
 	/**
@@ -148,6 +160,21 @@ public class PolicyTerm {
 	public boolean appliesTo(Object suspectValue) {
 		Object o1 = suspectValue;
 		Object o2 = value;
+
+		if (comparator == ComparatorType.MATCHES || comparator == ComparatorType.NOT_MATCHES) {
+			if (!(o1 instanceof String) || !(o2 instanceof Pattern)) {
+				return false;
+			}
+			Pattern pattern = (Pattern) o2;
+			boolean matches = pattern.matcher((String) o1).matches();
+			switch (comparator) {
+			case MATCHES:
+				return matches;
+			case NOT_MATCHES:
+				return !matches;
+			}
+		}
+
 		int result;
 		if (o1 instanceof Comparable && o2 instanceof Comparable) {
 			@SuppressWarnings("unchecked")
@@ -185,7 +212,9 @@ public class PolicyTerm {
 		GREATER_THAN(">"),
 		LESS_THAN("<"),
 		GREATER_EQUAL_THAN(">="),
-		LESS_EQUAL_THAN("<=");
+		LESS_EQUAL_THAN("<="),
+		MATCHES(".matches"),
+		NOT_MATCHES(".notMatches");
 
 		private final String string;
 
