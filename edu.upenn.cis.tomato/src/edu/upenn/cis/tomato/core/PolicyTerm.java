@@ -142,7 +142,7 @@ public class PolicyTerm {
 			valueString = value.toString();
 		}
 		if (comparator == ComparatorType.MATCHES || comparator == ComparatorType.NOT_MATCHES) {
-			return "" + propertyName + comparator + "(" + valueString + ")";
+			return "" + propertyName + comparator + "(\"" + valueString + "\")";
 		} else {
 			return "" + propertyName + " " + comparator + " " + valueString;
 		}

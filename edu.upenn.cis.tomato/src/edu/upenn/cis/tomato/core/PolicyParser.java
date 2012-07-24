@@ -316,7 +316,7 @@ public class PolicyParser {
 		AND("&"),
 		OR("\\|"),
 		NOT("!"),
-		NAME("[a-zA-Z_][\\w\\.]*"),
+		NAME("[a-zA-Z_][\\w]*"),
 		COMPARATOR("(?:[!><=]=)|[<>]|(?:\\.matches)|(?:\\.notMatches)"),
 		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using Friedl's: "unrolling-the-loop" technique
 		INTEGER("-?\\d+"),
