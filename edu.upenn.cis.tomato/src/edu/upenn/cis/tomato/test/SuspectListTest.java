@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +60,7 @@ public class SuspectListTest {
 		assertTrue(matches(expect0, sp1));
 
 		Suspect[] expect1 = {s[2], s[3], s[4]};
-		sp1.filter(new PolicyTerm(PropertyName.SITE_URL, ComparatorType.EQUAL, "http://e.com/a.js"));
+		sp1.filter(new PolicyTerm(PropertyName.SITE_URL, ComparatorType.MATCHES, Pattern.compile(".*/a\\.js")));
 		assertTrue(matches(expect1, sp1));
 
 		Suspect[] expect2 = {s[2], s[4]};

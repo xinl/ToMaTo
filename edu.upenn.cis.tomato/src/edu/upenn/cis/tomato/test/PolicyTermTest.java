@@ -68,7 +68,7 @@ public class PolicyTermTest {
 	public void testAppliesTo() {
 		PolicyTerm pt1 = new PolicyTerm("SiteName", ComparatorType.EQUAL, "Blah.");
 		PolicyTerm pt2 = new PolicyTerm("SiteStartOffset", ComparatorType.LESS_EQUAL_THAN, new Integer(3));
-		PolicyTerm pt3 = new PolicyTerm("SiteURL", ComparatorType.MATCHES, Pattern.compile(".*/a.js"));
+		PolicyTerm pt3 = new PolicyTerm("SiteURL", ComparatorType.MATCHES, Pattern.compile(".*/a\\.js$"));
 
 		assertTrue(pt1.appliesTo("Blah."));
 		assertTrue(pt1.appliesTo(new String("Blah.")));
@@ -81,7 +81,7 @@ public class PolicyTermTest {
 		assertFalse(pt2.appliesTo(new Integer(4)));
 		assertFalse(pt2.appliesTo("3"));
 
-		assertTrue(pt3.appliesTo("http://e.com/a.js"));
+		assertTrue(pt3.appliesTo("http://e.com/test/a.js"));
 		assertFalse(pt3.appliesTo("http://e.com/1.js"));
 		assertFalse(pt3.appliesTo(new Integer(4)));
 
