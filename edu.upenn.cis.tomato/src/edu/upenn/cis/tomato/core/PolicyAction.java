@@ -8,7 +8,7 @@ public class PolicyAction {
 		this.type = type;
 		this.content = content;
 	}
-	
+
 	public ActionType getType() {
 		return type;
 	}
@@ -24,6 +24,34 @@ public class PolicyAction {
 		} else {
 			return "" + type;
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((content == null) ? 0 : content.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PolicyAction other = (PolicyAction) obj;
+		if (content == null) {
+			if (other.content != null)
+				return false;
+		} else if (!content.equals(other.content))
+			return false;
+		if (type != other.type)
+			return false;
+		return true;
 	}
 
 	public enum ActionType {
@@ -45,6 +73,7 @@ public class PolicyAction {
 			return null;
 		}
 
+		@Override
 		public String toString() {
 			return string;
 		}

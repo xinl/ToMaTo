@@ -10,7 +10,7 @@ import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
 
 /**
  * A policy represented in disjunctive normal form.
- * 
+ *
  * @author Xin Li
  * @version July 10, 2012
  */
@@ -44,11 +44,11 @@ public class Policy {
 
 	/**
 	 * Put all useful TermGroups from a DNF PolicyNode tree into a Set.
-	 * 
+	 *
 	 * The TermGroups within the set is considered to be connected by logic OR.
-	 * 
+	 *
 	 * The Set will ensure no duplicate groups exist.
-	 * 
+	 *
 	 * @param node
 	 *            The root of a PolicyNode tree in disjunctive normal form.
 	 * @param groupSet
@@ -69,15 +69,15 @@ public class Policy {
 	/**
 	 * Put all PolicyTerms from the DNF PolicyNode tree into a PolicyTermGroup
 	 * and return the usefulness of the Group.
-	 * 
+	 *
 	 * The terms within the group is considered to be connected by logic AND.
-	 * 
+	 *
 	 * All logic NOTs are internalized into the PolicyTerm by negating its
 	 * comparator.
-	 * 
+	 *
 	 * A group is consider useless if it contains a pair of mutually negative
 	 * terms (e.g.: a&!a).
-	 * 
+	 *
 	 * @param node
 	 *            The root of a tree that represents an OR-connected group in a
 	 *            DNF tree.
@@ -109,7 +109,7 @@ public class Policy {
 	/**
 	 * Convert a PolicyNode tree into disjunctive normal form. The converted
 	 * tree may contain logic that can be further simplified.
-	 * 
+	 *
 	 * @param node
 	 *            The root of the PolicyNode tree to convert.
 	 * @return The root of the converted tree.
@@ -258,6 +258,7 @@ public class Policy {
 		return false;
 	}
 
+	@Override
 	public String toString() {
 		return string;
 	}
@@ -281,7 +282,7 @@ public class Policy {
 		}
 		return dynamicTerms;
 	}
-	
+
 	public Set<Set<PolicyTerm>> getAllTermGroups() {
 		Set<Set<PolicyTerm>> allTerms = new HashSet<Set<PolicyTerm>>();
 		for (PolicyTermGroup group : terms) {
@@ -289,17 +290,48 @@ public class Policy {
 		}
 		return allTerms;
 	}
-	
+
 	public PolicyAction getAction() {
 		return action;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((action == null) ? 0 : action.hashCode());
+		result = prime * result + ((terms == null) ? 0 : terms.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Policy other = (Policy) obj;
+		if (action == null) {
+			if (other.action != null)
+				return false;
+		} else if (!action.equals(other.action))
+			return false;
+		if (terms == null) {
+			if (other.terms != null)
+				return false;
+		} else if (!terms.equals(other.terms))
+			return false;
+		return true;
+	}
+
 	/**
 	 * A group of PolicyTerms connected by logic AND.
-	 * 
+	 *
 	 */
-	public class PolicyTermGroup implements Iterable<PolicyTerm> {
-		private Set<PolicyTerm> terms = new HashSet<PolicyTerm>();
+	public static class PolicyTermGroup implements Iterable<PolicyTerm> {
+		private final Set<PolicyTerm> terms = new HashSet<PolicyTerm>();
 		private boolean isAllStatic = true;
 
 		public PolicyTermGroup() {
@@ -320,7 +352,7 @@ public class Policy {
 		public boolean isAllStatic() {
 			return isAllStatic;
 		}
-		
+
 		public Set<PolicyTerm> getTerms() {
 			return terms;
 		}
@@ -334,7 +366,6 @@ public class Policy {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + getOuterType().hashCode();
 			result = prime * result + (isAllStatic ? 1231 : 1237);
 			result = prime * result + ((terms == null) ? 0 : terms.hashCode());
 			return result;
@@ -349,8 +380,6 @@ public class Policy {
 			if (getClass() != obj.getClass())
 				return false;
 			PolicyTermGroup other = (PolicyTermGroup) obj;
-			if (!getOuterType().equals(other.getOuterType()))
-				return false;
 			if (isAllStatic != other.isAllStatic)
 				return false;
 			if (terms == null) {
@@ -359,10 +388,6 @@ public class Policy {
 			} else if (!terms.equals(other.terms))
 				return false;
 			return true;
-		}
-
-		private Policy getOuterType() {
-			return Policy.this;
 		}
 
 		@Override
