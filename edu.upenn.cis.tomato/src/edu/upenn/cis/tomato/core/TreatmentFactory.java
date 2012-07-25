@@ -69,23 +69,23 @@ public class TreatmentFactory {
 		}
 
 		// combine all parts into definition string
-		String def = funcSignature + " {";
-		def += args;
-		def += cond;
-		def += retVar;
-		def += ifClause;
+		String def = funcSignature + " {\n";
+		def += "\t" + args + "\n";
+		def += "\t" + cond + "\n";
+		def += "\t" + retVar + "\n";
+		def += "\t" + ifClause + "\n";
 		if (epilog.size() > 0) {
-			def += "if (!_static) {";
+			def += "\t" + "if (!_static) {\n";
 			for (String s : epilog) {
-				def += s;
+				def += "\t\t" + s + "\n";
 			}
-			def += "}";
+			def += "\t}\n";
 		}
-		def += "return _retVar;";
-		def += "};"; // close function
+		def += "\t" + "return _retVar;\n";
+		def += "};\n"; // close function
 		// the "static variables" initializers after function definition
 		for (String s : staticVars) {
-			def += s;
+			def += s + "\n";
 		}
 
 		definitions.add(def);
