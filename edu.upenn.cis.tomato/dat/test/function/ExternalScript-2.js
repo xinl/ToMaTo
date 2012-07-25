@@ -1,5 +1,6 @@
 var calculator = {multiply: function(a, b){ return a * b; }};
 var printer = {print: function(a){ alert(a);}};
+printer.colorPrint = function defaultColorPrint() {};
 
 function substraction(f, g)
 { 
@@ -20,5 +21,6 @@ function innerAlert2()
  	addition(10,12);
  	calculator.multiply(2, 3);
  	printer.print("text");
+ 	printer.colorPrint();
  	
 }
