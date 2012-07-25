@@ -1,5 +1,6 @@
 package edu.upenn.cis.tomato.frontend;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -15,13 +16,26 @@ public class CommandLineFrontEnd {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// error checking omitted
-		String entryPoint = args[0];
+		if (args.length < 3) {
+			System.out.println("Usage:");
+			System.out.println("CommandLineFrontEnd <entry point file> <output path> \"<policy string>\"");
+			System.out.println("Multiple \"<policy string>\"'s are allowed.");
+			return;
+		}
+
+		File entryPoint;
+		try {
+			entryPoint = new File(args[0]).getCanonicalFile();
+		} catch (IOException e1) {
+			System.out.println("Invalid entry point files path: " + args[0]);
+			e1.printStackTrace();
+			return;
+		}
 		SourceBundle src;
 		try {
-			src = new SourceBundle(entryPoint);
+			src = new SourceBundle(entryPoint.toURI());
 		} catch (Exception e) {
-			System.out.println("Error reading source files.\n");
+			System.out.println("Error reading source files: " + e.getMessage());
 			e.printStackTrace();
 			return;
 		}
@@ -34,7 +48,7 @@ public class CommandLineFrontEnd {
 			try {
 				p = new Policy(args[i]);
 			} catch (ParseException e) {
-				System.out.println("Error parsing policy string.\n");
+				System.out.println("Error parsing policy string: " + e.getMessage());
 				e.printStackTrace();
 				return;
 			}
@@ -47,7 +61,7 @@ public class CommandLineFrontEnd {
 		try {
 			src.saveSourceBundleTo(outputPath);
 		} catch (IOException e) {
-			System.out.println("Error writing file.\n");
+			System.out.println("Error writing file to: ");
 			e.printStackTrace();
 			return;
 		}
