@@ -15,13 +15,18 @@ import java.util.TreeSet;
 import edu.upenn.cis.tomato.core.Suspect.SuspectType;
 import edu.upenn.cis.tomato.core.TreatmentFactory.Treatment;
 
+/**
+ * An enforcer to modify SourceBundles according to the rules set in a
+ * collection of Policy's.
+ *
+ * @author Xin Li
+ * @version July 25, 2012
+ *
+ */
 public class PolicyEnforcer {
-	/*
-	 * Build patch Lists from each Policies, combine them, then apply each patch
-	 * to designated positions in sourceBundle in one-pass.
-	 */
-	protected Map<Policy, Treatment> policiesAndTreatments = new HashMap<Policy, Treatment>();
 	public static final Comparator<Operation> SORT_BY_POSITION = new SortByPosition();
+
+	protected Map<Policy, Treatment> policiesAndTreatments = new HashMap<Policy, Treatment>();
 	protected TreatmentFactory treatmentFactory = new TreatmentFactory();
 
 	public PolicyEnforcer(Collection<Policy> policies) {
@@ -32,6 +37,15 @@ public class PolicyEnforcer {
 		}
 	}
 
+	/**
+	 * Enforce the Policy's in this PolicyEnforcer on a SourceBundle. If a
+	 * Policy is applicable to the given SourceBundle, the content of the
+	 * SourceBundle will be changed according to the action designated by the
+	 * Policy.
+	 *
+	 * @param sourceBundle
+	 *            SourceBundle to be enforced upon.
+	 */
 	public void enforceOn(SourceBundle sourceBundle) {
 		SortedSet<Operation> operations = getAllOperations(sourceBundle);
 
@@ -49,6 +63,14 @@ public class PolicyEnforcer {
 		sourceBundle.addTreatmentDefinitions(treatmentFactory.BASE_OBJECT_NAME + ".js", treatmentFactory.getDefinitions());
 	}
 
+	/**
+	 * Compile a flat list of Operations applicable to the given SourceBundle.
+	 * The list is ordered by position.
+	 *
+	 * @param sourceBundle
+	 *            A SourceBundle the Operations will be applied to.
+	 * @return A flat list of Operations customized to the given SourceBundle.
+	 */
 	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle) {
 		// use set to avoid multiple treatments on same site
 		SortedSet<Operation> operations = new TreeSet<Operation>(SORT_BY_POSITION);
@@ -69,16 +91,29 @@ public class PolicyEnforcer {
 			dynamicSuspects.removeAll(staticSuspects); // remove overlapping suspects
 
 			// add to the operation list
+			// clone a new SourcePosition to prevent contaminating suspects when we modify offsets later
 			for (Suspect s : staticSuspects) {
-				operations.add(new Operation(s.getPosition(), s.getType(), true, t));
+				operations.add(new Operation(cloneSourcePosition(s.getPosition()), s.getType(), true, t));
 			}
 			for (Suspect s : dynamicSuspects) {
-				operations.add(new Operation(s.getPosition(), s.getType(), false, t));
+				operations.add(new Operation(cloneSourcePosition(s.getPosition()), s.getType(), false, t));
 			}
 		}
 		return operations;
 	}
 
+	private SourcePosition cloneSourcePosition(SourcePosition pos) {
+		return new SourcePosition(pos.getURL(), pos.getStartOffset(), pos.getEndOffset());
+	}
+
+	/**
+	 * Rearrange the operations with nesting position ranges (start offset - end
+	 * offset) into a tree.
+	 *
+	 * @param operations
+	 *            A flat list of Operations ordered by their position.
+	 * @return The converted Operation list.
+	 */
 	protected SortedSet<Operation> nestOperations(SortedSet<Operation> operations) {
 		Set<Operation> markedForRemoval = new HashSet<Operation>();
 		for (Operation op : operations) {
@@ -111,6 +146,19 @@ public class PolicyEnforcer {
 		return operations;
 	}
 
+	/**
+	 * Execute the nested operations on a SourceBundle. Note: the set of
+	 * Operation must be nested by calling nestedOperations() before execution,
+	 * or else they may not be executed properly.
+	 *
+	 * @param sourceBundle
+	 *            The SourceBundle to be operated on.
+	 * @param operations
+	 *            A set of properly nested Operations to be executed.
+	 * @return The total difference in length (the lengths from start offsets to
+	 *         corresponding end offsets) after execution. This is used to
+	 *         recursively update the parent and sibling offsets.
+	 */
 	protected int executeOperations(SourceBundle sourceBundle, SortedSet<Operation> operations) {
 		int totalLengthDiff = 0;
 
@@ -137,7 +185,6 @@ public class PolicyEnforcer {
 				e.printStackTrace();
 				return 0;
 			}
-
 			String contentString = sourceBundle.getSourceContent(uri);
 			String targetString = contentString.substring(start, end);
 			String resultString = op.treatment.apply(targetString, op.suspectType, op.isStatic);
@@ -164,6 +211,16 @@ public class PolicyEnforcer {
 		return totalLengthDiff;
 	}
 
+	/**
+	 * Filter a SuspectList with static terms in a set of term group sets, which
+	 * represents the DNF logic of a Policy's terms.
+	 *
+	 * @param baseList
+	 *            The SuspectList to be filtered.
+	 * @param termGroups
+	 *            A Set of term group Sets to filter the SuspectList with.
+	 * @return The filtered SuspectList.
+	 */
 	protected SuspectList filterSuspectList(SuspectList baseList, Set<Set<PolicyTerm>> termGroups) {
 		SuspectList suspects = new SuspectList();
 		//TODO: avoid repeating the same filtering by caching filtering result?
@@ -188,6 +245,22 @@ public class PolicyEnforcer {
 		return treatmentFactory;
 	}
 
+	/**
+	 * An operation to modify a segment of a source file.
+	 *
+	 * It contains information about the target segment's position, the
+	 * Treatment to apply on such segment, and how should the treatment be
+	 * applied (depends on what type the corresponding Suspect is and whether
+	 * it's static).
+	 *
+	 * An Operation can have children Operations, which represents nested
+	 * relationship of the target segments.
+	 *
+	 * The equality of two Operations depends only on the position field. When
+	 * combined with SortedSet, this can prevent a same position be operated
+	 * upon twice.
+	 *
+	 */
 	public static class Operation {
 		protected SourcePosition pos;
 		protected SuspectType suspectType;
@@ -224,7 +297,7 @@ public class PolicyEnforcer {
 			return pos;
 		}
 
-		public SuspectType getType() {
+		public SuspectType getSuspectType() {
 			return suspectType;
 		}
 

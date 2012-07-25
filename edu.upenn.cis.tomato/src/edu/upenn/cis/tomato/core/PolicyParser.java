@@ -25,8 +25,9 @@ import edu.upenn.cis.tomato.core.Suspect.SuspectType;
  * <negation> := <atom> | "!" <negation>
  * <atom> := "(" <disjunction> ")" | <term>
  *
- * <term> := <name> <comparator> <value>
- * <comparator> := "==" | "!=" | ">" | "<" | ">=" | "<=" | ".matches" | ".notMaches"
+ * <term> := <name> <comparator> <value> | <name> <string comparator> "(" <string> ")"
+ * <comparator> := "==" | "!=" | ">" | "<" | ">=" | "<="
+ * <string comparator> := ".matches" | ".notMaches"
  * <value> := <float> | <integer> | <string>
  *
  * <action> := <name> {"(" <string> ")"}
