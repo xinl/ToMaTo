@@ -43,20 +43,20 @@ import com.ibm.wala.util.collections.Pair;
  * It caches these source file in memory and provides routines for read from and
  * write to external destinations. It also builds MappedSourceModule for static
  * analysis.
- * 
+ *
  * @author Xin Li
  * @version July 6, 2012
  */
 public class SourceBundle {
-	private URI entryPointURI;
-	private URI baseURI;
-	private Map<URI, String> sources = new HashMap<URI, String>();
-	private Set<MappedSourceModule> sourceModules;
+	private final URI entryPointURI;
+	private final URI baseURI;
+	private final Map<URI, String> sources = new HashMap<URI, String>();
+	private final Set<MappedSourceModule> sourceModules;
 	private int anonymousSourceCounter = 0;
 
 	/**
 	 * Construct new SourceBundle.
-	 * 
+	 *
 	 * @param entryPointURI
 	 *            the URI of the entry point HTML page.
 	 * @throws IOException
@@ -80,7 +80,7 @@ public class SourceBundle {
 	/**
 	 * Return a URI without filename part, if any. (e.g.:
 	 * http://example.com/file.html becomes http://example.com/)
-	 * 
+	 *
 	 * @param uri
 	 * @return The new URI without filename.
 	 */
@@ -99,7 +99,7 @@ public class SourceBundle {
 
 	/**
 	 * Get the URI of the entry point HTML page.
-	 * 
+	 *
 	 * @return the URI of the entry point
 	 */
 	public URI getEntryPointURI() {
@@ -108,7 +108,7 @@ public class SourceBundle {
 
 	/**
 	 * Check whether a source of specified URI is in this bundle.
-	 * 
+	 *
 	 * @param uri
 	 *            URI of the source to check.
 	 * @return whether the specified source is in this bundle
@@ -121,7 +121,7 @@ public class SourceBundle {
 
 	/**
 	 * Get a Set of the URIs of all sources in this bundle.
-	 * 
+	 *
 	 * @return A Set of URIs of sources
 	 */
 	public Set<URI> getSourceURIs() {
@@ -130,7 +130,7 @@ public class SourceBundle {
 
 	/**
 	 * Get the content of the source of specified URI.
-	 * 
+	 *
 	 * @param uri
 	 *            URI of the source
 	 * @return the content of the source or <code>null</code> if the source
@@ -153,7 +153,7 @@ public class SourceBundle {
 
 	/**
 	 * Get an InputStream of the source content of the specified URI.
-	 * 
+	 *
 	 * @param uri
 	 *            URI to the source
 	 * @return An InputStream to the source content.
@@ -174,7 +174,7 @@ public class SourceBundle {
 
 	/**
 	 * Get mapped source modules for further static analysis.
-	 * 
+	 *
 	 * @return a set of mapped source modules
 	 */
 	public Set<MappedSourceModule> getSourceModules() {
@@ -183,7 +183,7 @@ public class SourceBundle {
 
 	/**
 	 * Add a source to the bundle, fetches the content by URI specified.
-	 * 
+	 *
 	 * @param uri
 	 *            the URI of the source
 	 * @throws IOException
@@ -194,7 +194,7 @@ public class SourceBundle {
 
 	/**
 	 * Add a source to the bundle with designated content.
-	 * 
+	 *
 	 * @param uri
 	 *            the URI of the new source. It doesn't have to exists or be
 	 *            readable.
@@ -206,7 +206,7 @@ public class SourceBundle {
 		sources.put(key, content);
 		return key;
 	}
-	
+
 	public URI addTreatmentDefinitions(String filename, String content) {
 		URI uri = null;
 		try {
@@ -231,6 +231,8 @@ public class SourceBundle {
 		} else {
 			output.replace(headElement.getContent(), newScriptTag + headElement.getContent().toString());
 		}
+		// update entry point content
+		setSourceContent(getEntryPointURI(), output.toString());
 		// add a new source to source bundle
 		return addSource(uri, content);
 	}
@@ -250,7 +252,7 @@ public class SourceBundle {
 	 * host name will be put under output path. For example: If the URI is
 	 * http://www.example.com/dir/script.js, the script file will be put under
 	 * [output_path]/www.example.com/dir/
-	 * 
+	 *
 	 * @param pathName
 	 * @return a Set of File objects that has been written
 	 * @throws IOException
@@ -298,7 +300,7 @@ public class SourceBundle {
 
 	/**
 	 * Update the HTML page's script tags to refer to saved script files.
-	 * 
+	 *
 	 * @param uriMapping
 	 *            mapping of original absolute URIs and new URIs pointing to the
 	 *            newly written script files.
@@ -393,7 +395,7 @@ public class SourceBundle {
 
 	/**
 	 * Fetch the content at an URI.
-	 * 
+	 *
 	 * @param uri
 	 *            the URI pointing to the content.
 	 * @return the content at the specified URI.

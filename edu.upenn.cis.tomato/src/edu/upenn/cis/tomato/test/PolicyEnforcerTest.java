@@ -183,6 +183,10 @@ public class PolicyEnforcerTest {
 				assertTrue(content.contains(".t1(true, null, alert, \"some words\")"));
 				assertTrue(content.contains(".t1(true, null, addition, 1, 2)"));
 			}
+			if (uri.toString().endsWith(".html")) {
+				String content = sb.getSourceContent(uri);
+				assertTrue(content.contains("src=\"" + pe.getTreatmentFactory().BASE_OBJECT_NAME + ".js\""));
+			}
 		}
 		assertTrue(defFileFound);
 	}
