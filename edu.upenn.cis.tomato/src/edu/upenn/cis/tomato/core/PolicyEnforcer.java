@@ -2,12 +2,12 @@ package edu.upenn.cis.tomato.core;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -20,32 +20,36 @@ public class PolicyEnforcer {
 	 * Build patch Lists from each Policies, combine them, then apply each patch
 	 * to designated positions in sourceBundle in one-pass.
 	 */
-	protected List<Policy> policies;
-	protected final Comparator<Operation> SORT_BY_POSITION = new SortByPosition();
+	protected Map<Policy, Treatment> policiesAndTreatments = new HashMap<Policy, Treatment>();
+	public static final Comparator<Operation> SORT_BY_POSITION = new SortByPosition();
 	protected TreatmentFactory treatmentFactory = new TreatmentFactory();
 
 	public PolicyEnforcer(Collection<Policy> policies) {
-		this.policies = new ArrayList<Policy>(policies);
+		for (Policy pol : policies) {
+			if (!policiesAndTreatments.containsKey(pol)) { // skip duplicates
+				policiesAndTreatments.put(pol, treatmentFactory.makeTreatment(pol));
+			}
+		}
 	}
 
 	public void enforceOn(SourceBundle sourceBundle) {
-		SortedSet<Operation> operations = getAllOperations(sourceBundle, policies, new TreatmentFactory());
+		SortedSet<Operation> operations = getAllOperations(sourceBundle);
 
 		if (operations.size() == 0) {
 			return;
 		}
 
 		// organize operations into a tree based on their nesting relationship
-		Operation root = makeOperationTree(operations);
+		operations = nestOperations(operations);
 
 		// carry out the operations
-		root.operateOn(sourceBundle);
+		executeOperations(sourceBundle, operations);
 
 		// add the definition JS file to the beginning of web page
 		sourceBundle.addTreatmentDefinitions(treatmentFactory.BASE_OBJECT_NAME + ".js", treatmentFactory.getDefinitions());
 	}
 
-	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle, Collection<Policy> policies, TreatmentFactory treatmentFactory) {
+	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle) {
 		// use set to avoid multiple treatments on same site
 		SortedSet<Operation> operations = new TreeSet<Operation>(SORT_BY_POSITION);
 
@@ -53,7 +57,9 @@ public class PolicyEnforcer {
 
 		StaticAnalyzer sa = new StaticAnalyzer(sourceBundle);
 
-		for (Policy p : policies) {
+		for (Map.Entry<Policy, Treatment> entry : policiesAndTreatments.entrySet()) {
+			Policy p = entry.getKey();
+			Treatment t = entry.getValue();
 			Set<Set<PolicyTerm>> staticTerms = p.getStaticTermGroups();
 			Set<Set<PolicyTerm>> dynamicTerms = p.getDynamicTermGroups();
 
@@ -62,51 +68,100 @@ public class PolicyEnforcer {
 			SuspectList dynamicSuspects = filterSuspectList(sa.getAllSuspects(), dynamicTerms);
 			dynamicSuspects.removeAll(staticSuspects); // remove overlapping suspects
 
-			// prepare treatments
-			Treatment treatment = treatmentFactory.makeTreatment(p);
-
 			// add to the operation list
 			for (Suspect s : staticSuspects) {
-				operations.add(new Operation(s.getPosition(), s.getType(), true, treatment));
+				operations.add(new Operation(s.getPosition(), s.getType(), true, t));
 			}
 			for (Suspect s : dynamicSuspects) {
-				operations.add(new Operation(s.getPosition(), s.getType(), false, treatment));
+				operations.add(new Operation(s.getPosition(), s.getType(), false, t));
 			}
 		}
 		return operations;
 	}
 
-	protected Operation makeOperationTree(SortedSet<Operation> operations) {
+	protected SortedSet<Operation> nestOperations(SortedSet<Operation> operations) {
 		Set<Operation> markedForRemoval = new HashSet<Operation>();
 		for (Operation op : operations) {
+			SortedSet<Operation> toBeNested = new TreeSet<Operation>(SORT_BY_POSITION);
+			if (toBeNested.contains(op)) {
+				continue;
+			}
 			SourcePosition opPos = op.getPosition();
 			SortedSet<Operation> tailSet = operations.tailSet(op);
 			Iterator<Operation> tailIter = tailSet.iterator();
-			if (tailIter.hasNext()) {
-				tailIter.next(); // skip op itself
-			}
+			tailIter.next(); // skip op itself
 			while (tailIter.hasNext()) {
 				Operation tailOp = tailIter.next();
 				SourcePosition tailOpPos = tailOp.getPosition();
 				if (tailOpPos.getURL().equals(opPos.getURL()) && tailOpPos.getStartOffset() < opPos.getEndOffset()) {
-					// if the next operation has the same URL and is nested.
-					op.addChild(tailOp);
-					markedForRemoval.add(tailOp);
+					// if the next operation has the same URL and should be nested.
+					toBeNested.add(tailOp);
 				} else {
 					// no need to look further, there won't be any nesting further down
 					break;
 				}
 			}
+			if (toBeNested.size() > 0) {
+				op.addChildren(nestOperations(toBeNested));
+			}
+			markedForRemoval.addAll(toBeNested);
 		}
-		// remove the nested Operations from the highest level
+		// remove the nested Operations from the this level
 		operations.removeAll(markedForRemoval);
+		return operations;
+	}
 
-		// put these operations as children of an empty root Operation
-		Operation root = new Operation(null, null, false, null);
+	protected int executeOperations(SourceBundle sourceBundle, SortedSet<Operation> operations) {
+		int totalLengthDiff = 0;
+
 		for (Operation op : operations) {
-			root.addChild(op);
+			int opLengthDiff = 0;
+			// carry out children operations first
+			if (op.children != null) {
+				opLengthDiff += executeOperations(sourceBundle, op.children);
+				// add diff to the end offsets of this operation
+				if (opLengthDiff != 0) {
+					op.getPosition().setEndOffset(op.getPosition().getEndOffset() + opLengthDiff);
+				}
+			}
+
+			// carry out the operation itself
+			SourcePosition pos = op.getPosition();
+			int start = pos.getStartOffset();
+			int end = pos.getEndOffset();
+			URI uri = null;
+			try {
+				uri = pos.getURL().toURI();
+			} catch (URISyntaxException e) {
+				System.err.println("Invalid URI Syntax.");
+				e.printStackTrace();
+				return 0;
+			}
+
+			String contentString = sourceBundle.getSourceContent(uri);
+			String targetString = contentString.substring(start, end);
+			String resultString = op.treatment.apply(targetString, op.suspectType, op.isStatic);
+			sourceBundle.setSourceContent(uri, contentString.substring(0, start) + resultString + contentString.substring(end));
+
+			opLengthDiff += resultString.length() - targetString.length();
+
+			if (opLengthDiff != 0) {
+				// add diff to the start and end offsets of all subsequent sibling operations on the same URL
+				SortedSet<Operation> tailSet = operations.tailSet(op);
+				Iterator<Operation> iter = tailSet.iterator();
+				iter.next(); // skip the child itself
+				while (iter.hasNext()) {
+					Operation sibling = iter.next();
+					if (!sibling.getPosition().getURL().equals(op.getPosition().getURL())) {
+						break;
+					}
+					sibling.getPosition().setStartOffset(sibling.getPosition().getStartOffset() + opLengthDiff);
+					sibling.getPosition().setEndOffset(sibling.getPosition().getEndOffset() + opLengthDiff);
+				}
+			}
+			totalLengthDiff += opLengthDiff;
 		}
-		return root;
+		return totalLengthDiff;
 	}
 
 	protected SuspectList filterSuspectList(SuspectList baseList, Set<Set<PolicyTerm>> termGroups) {
@@ -125,14 +180,22 @@ public class PolicyEnforcer {
 		return suspects;
 	}
 
-	public class Operation {
+	public Set<Policy> getPolicies() {
+		return policiesAndTreatments.keySet();
+	}
+
+	public TreatmentFactory getTreatmentFactory() {
+		return treatmentFactory;
+	}
+
+	public static class Operation {
 		protected SourcePosition pos;
 		protected SuspectType suspectType;
 		protected boolean isStatic;
 		protected Treatment treatment;
 		protected SortedSet<Operation> children;
 
-		protected Operation(SourcePosition pos, SuspectType suspectType, boolean isStatic, Treatment treatment) {
+		public Operation(SourcePosition pos, SuspectType suspectType, boolean isStatic, Treatment treatment) {
 			this.pos = pos;
 			this.suspectType = suspectType;
 			this.isStatic = isStatic;
@@ -146,61 +209,11 @@ public class PolicyEnforcer {
 			children.add(op);
 		}
 
-		public int operateOn(SourceBundle sourceBundle) {
-			int lengthDiff = 0;
-
-			// carry out children operations first, if any
-			if (children != null) {
-				for (Operation op : children) {
-					int childLengthDiff = op.operateOn(sourceBundle);
-					if (childLengthDiff != 0) {
-						// add diff to the start offsets of all subsequent sibling operations on the same URL
-						SortedSet<Operation> tailSet = children.tailSet(op);
-						if (tailSet.size() > 1) {
-							Iterator<Operation> iter = tailSet.iterator();
-							iter.next(); // skip the child itself
-							while (iter.hasNext()) {
-								Operation sibling = iter.next();
-								if (!sibling.getPosition().getURL().equals(op.getPosition().getURL())) {
-									break;
-								}
-								sibling.getPosition().setStartOffset(sibling.getPosition().getStartOffset() + childLengthDiff);
-							}
-
-						}
-						// add diff to parent's end offset
-						lengthDiff += childLengthDiff;
-					}
-				}
+		public void addChildren(Collection<Operation> ops) {
+			if (children == null) {
+				children = new TreeSet<Operation>(SORT_BY_POSITION);
 			}
-
-			if (pos == null || suspectType == null || treatment == null) {
-				// this only happens to root operation with empty pos/type/treatment
-				return 0;
-			}
-
-			// carry out the operation in itself
-
-			int start = pos.getStartOffset();
-			int end = pos.getEndOffset();
-			URI uri = null;
-			try {
-				uri = pos.getURL().toURI();
-			} catch (URISyntaxException e) {
-				System.err.println("Invalid URI Syntax.");
-				e.printStackTrace();
-				return 0;
-			}
-
-			String contentString = sourceBundle.getSourceContent(uri);
-			String targetString = contentString.substring(start, end);
-			String resultString = treatment.apply(targetString, suspectType, isStatic);
-			sourceBundle.setSourceContent(uri, contentString.substring(0, start) + resultString + contentString.substring(end));
-
-			lengthDiff += resultString.length() - targetString.length();
-
-			pos.setEndOffset(pos.getEndOffset() + lengthDiff);
-			return lengthDiff;
+			children.addAll(ops);
 		}
 
 		public SortedSet<Operation> getChildren() {
@@ -227,12 +240,10 @@ public class PolicyEnforcer {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + getOuterType().hashCode();
 			result = prime * result + ((pos == null) ? 0 : pos.hashCode());
 			return result;
 		}
 
-		// two Operation are considered the same if their pos's are the same.
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj)
@@ -242,8 +253,6 @@ public class PolicyEnforcer {
 			if (getClass() != obj.getClass())
 				return false;
 			Operation other = (Operation) obj;
-			if (!getOuterType().equals(other.getOuterType()))
-				return false;
 			if (pos == null) {
 				if (other.pos != null)
 					return false;
@@ -252,12 +261,25 @@ public class PolicyEnforcer {
 			return true;
 		}
 
-		private PolicyEnforcer getOuterType() {
-			return PolicyEnforcer.this;
+		@Override
+		public String toString() {
+			return toString("");
+		}
+
+		public String toString(String indent) {
+			String str = indent + "Operation [pos=" + pos + ", suspectType=" + suspectType + ", isStatic=" + isStatic + ", treatment=" + treatment + "]";
+			if (children != null) {
+				indent += "\t";
+				str += " has children:";
+				for (Operation op : children) {
+					str += "\n" + op.toString(indent);
+				}
+			}
+			return str;
 		}
 	}
 
-	protected class SortByPosition implements Comparator<Operation> {
+	protected static class SortByPosition implements Comparator<Operation> {
 
 		@Override
 		public int compare(Operation a, Operation b) {
