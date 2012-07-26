@@ -61,7 +61,7 @@ public class TreatmentFactory {
 		String ifClause = "if (_cond) ";
 		switch (policy.getAction().getType()) {
 		case PROHIBIT:
-			ifClause += ";"; // do nothing with empty statement
+			ifClause += "{ ; } else { _func.apply(_context, arguments); }";
 			break;
 		case CUSTOM:
 			ifClause += policy.getAction().getContent();
