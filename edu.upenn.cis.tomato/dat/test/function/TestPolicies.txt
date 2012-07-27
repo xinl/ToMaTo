@@ -1,8 +1,8 @@
 # a simple test
-SiteName == "alert" & TimeInvoked > 2 : prohibit
+SiteName == "alert" & TimesInvoked > 2 : prohibit
 
 # test Callee/CallerName and custom action
 CalleeName == "defaultColorPrint" | CallerName == "innerAlert2" & SiteName.matches(".*ply") : custom("console.log(\"Blocked by Policy #2.\");")
 
-# test more complex logic and a shared TimeInvoked for heterogenous functions.
-(SiteName == "addition" & SiteURL.matches(".*-2\.js") | SiteName.matches("printer.*")) & TimeInvoked < 1 : prohibit
+# test more complex logic and a shared TimesInvoked for heterogenous functions.
+(SiteName == "addition" & SiteURL.matches(".*-2\.js") | SiteName.matches("printer.*")) & TimesInvoked < 1 : prohibit

@@ -21,7 +21,7 @@ public class TreatmentFactoryTest {
 	@Test
 	public void testTreatmentFactory() throws ParseException {
 		Policy[] ps = {
-				new Policy("SiteName == \"foo.bar\" | SiteURL == \"http://t.co/a.js\" & TimeInvoked > 3 : prohibit"),
+				new Policy("SiteName == \"foo.bar\" | SiteURL == \"http://t.co/a.js\" & TimesInvoked > 3 : prohibit"),
 				new Policy("SiteStartOffset == 9 & SiteEndOffset == 24 : custom(\"{ _retVal = 2001; } else { alert(123); }\")") };
 		TreatmentFactory tf = new TreatmentFactory();
 		for (Policy p : ps) {
@@ -32,8 +32,8 @@ public class TreatmentFactoryTest {
 
 		String expected = "function " + bon + "(){}";
 		expected += bon + ".t1 = function (_static, _context, _func) { " + "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);"
-				+ "var _cond = _static || (this.t1.TimeInvoked > 3);" + "var _retVar = null;" + "if (_cond) ;" + "if (!_static) {this.t1.TimeInvoked++;}"
-				+ "return _retVar;" + "};" + bon + ".t1.TimeInvoked = 0;";
+				+ "var _cond = _static || (this.t1.TimesInvoked > 3);" + "var _retVar = null;" + "if (_cond) {;} else { _func.apply(_context, arguments);}" + "if (!_static) {this.t1.TimesInvoked++;}"
+				+ "return _retVar;" + "};" + bon + ".t1.TimesInvoked = 0;";
 		expected += bon + ".t2 = function (_static, _context, _func) { " + "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);"
 				+ "var _cond = _static;" + "var _retVar = null;" + "if (_cond) { _retVal = 2001; } else { alert(123); } " + "return _retVar;" + "};";
 
@@ -43,7 +43,7 @@ public class TreatmentFactoryTest {
 
 	@Test
 	public void testTreatment() throws ParseException {
-		Policy p1 = new Policy("SiteName == \"foo.bar\" | SiteURL == \"http://t.co/a.js\" & TimeInvoked > 3 : prohibit");
+		Policy p1 = new Policy("SiteName == \"foo.bar\" | SiteURL == \"http://t.co/a.js\" & TimesInvoked > 3 : prohibit");
 		Policy p2 = new Policy("SiteStartOffset == 9 & SiteEndOffset == 24 : custom(\"{ _retVal = 2001; } else { alert(123); }\")");
 		TreatmentFactory tf = new TreatmentFactory();
 		Treatment t1 = tf.makeTreatment(p1);

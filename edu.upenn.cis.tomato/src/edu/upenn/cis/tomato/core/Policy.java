@@ -29,7 +29,7 @@ public class Policy {
 	protected PolicyAction action;
 
 	public Policy(String string) throws ParseException {
-		// example: ActionType = "invoke" & (CallerName = "alert" | CallerName = "foo.bar") & TimeInvoked > 10 : custom("code")
+		// example: ActionType = "invoke" & (CallerName = "alert" | CallerName = "foo.bar") & TimesInvoked > 10 : custom("code")
 		this.string = string;
 		PolicyParser parser = new PolicyParser(string);
 		PolicyNode root = parser.getPolicyTree();

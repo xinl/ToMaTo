@@ -20,7 +20,7 @@ public class PolicyTermTest {
 	@Test
 	public void testIsStatic() {
 		PolicyTerm pt1 = new PolicyTerm("SiteName", ComparatorType.EQUAL, "Blah.");
-		PolicyTerm pt2 = new PolicyTerm("TimeInvoked", ComparatorType.LESS_THAN, new Integer(3));
+		PolicyTerm pt2 = new PolicyTerm("TimesInvoked", ComparatorType.LESS_THAN, new Integer(3));
 		assertTrue(pt1.isStatic());
 		assertFalse(pt2.isStatic());
 	}

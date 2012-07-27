@@ -59,14 +59,14 @@ public class PolicyEnforcerTest {
 	public void testFilterSuspectList() throws MalformedURLException {
 		SuspectList baseList = makeBaseList();
 
-		// SiteURL.matches(".*/a\\.js" & (SiteStartOffset == 6 | TimeInvoked >= 3)
+		// SiteURL.matches(".*/a\\.js" & (SiteStartOffset == 6 | TimesInvoked >= 3)
 		Set<Set<PolicyTerm>> termGroups = new HashSet<Set<PolicyTerm>>();
 		termGroups.add(new HashSet<PolicyTerm>(Arrays.asList(new PolicyTerm[] {
 				new PolicyTerm(PropertyName.SITE_URL, ComparatorType.MATCHES, Pattern.compile(".*/a\\.js")),
 				new PolicyTerm(PropertyName.SITE_START_OFFSET, ComparatorType.EQUAL, new Integer(6)) })));
 		termGroups.add(new HashSet<PolicyTerm>(Arrays.asList(new PolicyTerm[] {
 				new PolicyTerm(PropertyName.SITE_URL, ComparatorType.MATCHES, Pattern.compile(".*/a\\.js")),
-				new PolicyTerm(PropertyName.TIME_INVOKED, ComparatorType.GREATER_EQUAL_THAN, new Integer(3)) })));
+				new PolicyTerm(PropertyName.TIMES_INVOKED, ComparatorType.GREATER_EQUAL_THAN, new Integer(3)) })));
 
 		PE pe = new PE(new ArrayList<Policy>());
 		SuspectList resultList = pe.filterSuspectList(baseList, termGroups);
@@ -83,7 +83,7 @@ public class PolicyEnforcerTest {
 	@Test
 	public void testGetAllOperations() throws ParseException, InvalidParameterException, IOException {
 		List<Policy> policies = new ArrayList<Policy>();
-		policies.add(new Policy("SiteURL.matches(\".*-1\\.js$\") & (SiteStartOffset >= 90 | TimeInvoked >= 3): prohibit"));
+		policies.add(new Policy("SiteURL.matches(\".*-1\\.js$\") & (SiteStartOffset >= 90 | TimesInvoked >= 3): prohibit"));
 		PE pe = new PE(policies);
 
 		File file = new File(new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/function/BasicFunctionInvocation.html");

@@ -41,10 +41,10 @@ public class TreatmentFactory {
 			cond += " || (";
 			for (PolicyTerm term : group) {
 				if (!term.isStatic()) { // all static terms are true and omitted
-					if (term.getPropertyName() == PropertyName.TIME_INVOKED) {
-						cond += "this." + funcName + ".TimeInvoked " + term.getComparator() + " " + term.getValue() + " &&";
-						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimeInvoked = 0;");
-						epilog.add("this." + funcName + ".TimeInvoked++;");
+					if (term.getPropertyName() == PropertyName.TIMES_INVOKED) {
+						cond += "this." + funcName + ".TimesInvoked " + term.getComparator() + " " + term.getValue() + " &&";
+						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimesInvoked = 0;");
+						epilog.add("this." + funcName + ".TimesInvoked++;");
 					}
 				}
 			}

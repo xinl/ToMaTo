@@ -249,7 +249,7 @@ public class PolicyTerm {
 		CALLEE_END_OFFSET("CalleeEndOffset", true),
 		IS_CONSTRUCTOR("IsConstructor", true),
 		// dynamic properties
-		TIME_INVOKED("TimeInvoked", false);
+		TIMES_INVOKED("TimesInvoked", false);
 
 		private String string;
 		private boolean isStatic;
