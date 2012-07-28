@@ -16,10 +16,10 @@ import edu.upenn.cis.tomato.core.PolicyTerm;
 public class PolicyTest {
 
 	String[] ps = {
-			"SuspectType == \"FunctionInvocation\" & (CallerName == \"alert\" | CallerName == \"foo.bar\") & TimesInvoked > 10 : custom(\"code\")",
+			"SuspectType == FunctionInvocation & (CallerName == \"alert\" | CallerName == \"foo.bar\") & TimesInvoked > 10 : custom(\"code\")",
 			"(CallerName == \"eval\" | CallerName == \"foo.bar\") & TimesInvoked >= -10.2 : prohibit",
 			"! ! ! (! CallerName.matches(\"alert\") & CallerName == \"foo.bar\") | ! TimesInvoked >= 10 : custom(\"{foo}\")",
-			"SiteStartOffset > 0 : prohibit"
+			"IsConstructor == false & SiteStartOffset > 0 : prohibit"
 	};
 
 	String[] bad_ps = {

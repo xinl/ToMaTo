@@ -28,7 +28,7 @@ import edu.upenn.cis.tomato.core.Suspect.SuspectType;
  * <term> := <name> <comparator> <value> | <name> <string comparator> "(" <string> ")"
  * <comparator> := "==" | "!=" | ">" | "<" | ">=" | "<="
  * <string comparator> := ".matches" | ".notMaches"
- * <value> := <float> | <integer> | <string>
+ * <value> := <float> | <integer> | <string> | <boolean> | <suspect type>
  *
  * <action> := <name> {"(" <string> ")"}
  * </pre>
@@ -142,12 +142,7 @@ public class PolicyParser {
 				error("Unclosed parenthesis.");
 			}
 		} else {
-			if (name == PropertyName.SUSPECT_TYPE) {
-				// Convert SuspectType string to SuspectType enum object
-				value = SuspectType.fromString((String) parseValue());
-			} else {
-				value = parseValue();
-			}
+			value = parseValue();
 		}
 		term = new PolicyTerm(name, comp, value);
 		PolicyNode node = new PolicyNode(PolicyNode.NodeType.TERM, term);
@@ -189,6 +184,8 @@ public class PolicyParser {
 		Matcher integerMatcher = getMatcher(TokenType.INTEGER);
 		Matcher floatMatcher = getMatcher(TokenType.FLOAT);
 		Matcher stringMatcher = getMatcher(TokenType.STRING);
+		Matcher booleanMatcher = getMatcher(TokenType.BOOLEAN);
+		Matcher suspectTypeMatcher = getMatcher(TokenType.SUSPECT_TYPE);
 		if (floatMatcher.lookingAt()) {
 			cursor = floatMatcher.end();
 			return Float.valueOf(floatMatcher.group());
@@ -198,6 +195,12 @@ public class PolicyParser {
 		} else if (stringMatcher.lookingAt()) {
 			cursor = stringMatcher.end();
 			return stringMatcher.group(1); // without surrounding quotes
+		} else if (booleanMatcher.lookingAt()) {
+			cursor = booleanMatcher.end();
+			return Boolean.valueOf(booleanMatcher.group());
+		} else if (suspectTypeMatcher.lookingAt()) {
+			cursor = suspectTypeMatcher.end();
+			return SuspectType.fromString(suspectTypeMatcher.group());
 		} else {
 			error("Can't find a valid value token.");
 		}
@@ -322,6 +325,8 @@ public class PolicyParser {
 		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using Friedl's: "unrolling-the-loop" technique
 		INTEGER("-?\\d+"),
 		FLOAT("-?\\d+\\.\\d+"),
+		BOOLEAN("(?:true)|(?:false)"),
+		SUSPECT_TYPE(buildSuspectTypeRegex()),
 		LEFT_PAREN("\\("),
 		RIGHT_PAREN("\\)"),
 		WHITESPACE("\\s+");
@@ -334,6 +339,14 @@ public class PolicyParser {
 
 		public Pattern getPattern() {
 			return pattern;
+		}
+
+		private static String buildSuspectTypeRegex() {
+			String regex = "";
+			for (SuspectType st : SuspectType.values()) {
+				regex += "(?:" + st.toString() + ")|";
+			}
+			return regex.substring(0, regex.length() - 1); // remove extra |
 		}
 	}
 }
