@@ -122,8 +122,8 @@ public class Policy {
 		if (node.getType() == TERM) {
 			PolicyTerm term = (PolicyTerm) node.getValue();
 			if (term.comparator == ComparatorType.UNEQUAL || term.comparator == ComparatorType.GREATER_EQUAL_THAN
-					|| term.comparator == ComparatorType.LESS_EQUAL_THAN) {
-				// put negated term node under a NOT node
+					|| term.comparator == ComparatorType.LESS_EQUAL_THAN || term.comparator == ComparatorType.NOT_MATCHES) {
+				// normalize term node to ==, >, <, matches by putting negated term node under a NOT node
 				PolicyNode newNode = new PolicyNode(NOT);
 				newNode.setLeft(new PolicyNode(TERM, term.negate()));
 				return newNode;
@@ -190,7 +190,7 @@ public class Policy {
 		}
 
 		// Normalization
-		// put smaller priority nodes as left as possible
+		// put lower priority nodes as left as possible
 		// TERM < NOT < AND < OR
 		if (node.getLeft().getType().priority > node.getRight().getType().priority) {
 			swapChildren(node);
@@ -222,6 +222,7 @@ public class Policy {
 
 				return getRawDNF(orNode); // Recursion take care of step 2 of expanding (a | b) & (c | d)
 			} else {
+				// because of the normalization step above, if we reach here, the node should already be in DNF
 				return node;
 			}
 		}
