@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.upenn.cis.tomato.core.PolicyTerm.ComparatorType;
 import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
 import edu.upenn.cis.tomato.core.Suspect.SuspectType;
 
@@ -34,7 +35,7 @@ public class TreatmentFactory {
 		String args = "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);";
 
 		// build condition
-		// TODO: a solution to name conflicts on _cond, etc will be referring to them as argument[x] but it'll make code harder to read
+		// TODO: a solution to name conflicts on _cond, etc will be referring to them as arguments[x] but it'll make code harder to read
 		String cond = "var _cond = _static";
 		Set<Set<PolicyTerm>> dynamicTermGroups = policy.getDynamicTermGroups();
 		for (Set<PolicyTerm> group : dynamicTermGroups) {
@@ -42,7 +43,7 @@ public class TreatmentFactory {
 			for (PolicyTerm term : group) {
 				if (!term.isStatic()) { // all static terms are true and omitted
 					if (term.getPropertyName() == PropertyName.TIMES_INVOKED) {
-						cond += "this." + funcName + ".TimesInvoked " + term.getComparator() + " " + term.getValue() + " &&";
+						cond += "this." + funcName + ".TimesInvoked" + getComparatorValueJSString(term) + " &&";
 						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimesInvoked = 0;");
 						epilog.add("this." + funcName + ".TimesInvoked++;");
 					}
@@ -92,6 +93,31 @@ public class TreatmentFactory {
 
 		return new Treatment(BASE_OBJECT_NAME + "." + funcName);
 
+	}
+
+	private String getComparatorValueJSString(PolicyTerm term) {
+		if (term.getComparator() == ComparatorType.MATCHES) {
+			return ".match(/" + term.getValue() + "/) !== null";
+		} else if (term.getComparator() == ComparatorType.NOT_MATCHES) {
+			return ".match(/" + term.getValue() + "/) === null";
+		} else {
+			String comp = "";
+			switch (term.getComparator()) {
+			case EQUAL:
+				comp += " === ";
+				break;
+			case UNEQUAL:
+				comp += " !== ";
+				break;
+			default:
+				comp += " " + term.getComparator() + " ";
+			}
+			if (term.getValue() instanceof String) {
+				return comp + "\"" + term.getValue() + "\"";
+			} else {
+				return comp + term.getValue();
+			}
+		}
 	}
 
 	public String getDefinitions() {
