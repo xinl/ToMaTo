@@ -32,7 +32,7 @@ public class TreatmentFactoryTest {
 
 		String expected = "function " + bon + "(){}";
 		expected += bon + ".t1 = function (_static, _context, _func) { " + "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);"
-				+ "var _cond = _static || (this.t1.TimesInvoked > 3);" + "var _retVar = null;" + "if (_cond) {;} else { _func.apply(_context, arguments);}" + "if (!_static) {this.t1.TimesInvoked++;}"
+				+ "var _cond = _static || (this.t1.TimesInvoked > 3);" + "var _retVar = null;" + "if (_cond) {;} else { _retVar = _func.apply(_context, arguments);}" + "if (!_static) {this.t1.TimesInvoked++;}"
 				+ "return _retVar;" + "};" + bon + ".t1.TimesInvoked = 0;";
 		expected += bon + ".t2 = function (_static, _context, _func) { " + "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);"
 				+ "var _cond = _static;" + "var _retVar = null;" + "if (_cond) { _retVal = 2001; } else { alert(123); } " + "return _retVar;" + "};";
