@@ -230,6 +230,10 @@ public class PolicyEnforcer {
 				if (term.isStatic()) {
 					// ignore dynamic terms when filtering
 					sl.filter(term);
+					if (sl.size() == 0) {
+						// Empty set's union with any other set will be empty.
+						break;
+					}
 				}
 			}
 			suspects.addAll(sl);
