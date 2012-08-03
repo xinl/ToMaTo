@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import edu.upenn.cis.tomato.core.Policy;
 import edu.upenn.cis.tomato.core.PolicyEnforcer;
 import edu.upenn.cis.tomato.core.SourceBundle;
+import edu.upenn.cis.tomato.core.SourcePosition;
 
 public class CLIFrontEnd {
 
@@ -93,7 +95,21 @@ public class CLIFrontEnd {
 		// enforce policies on source bundle
 
 		PolicyEnforcer pe = new PolicyEnforcer(policies);
-		pe.enforceOn(src);
+		Map<SourcePosition, List<Policy>> conflicts = pe.enforceOn(src);
+
+		// generate conflict log
+		String conflictLog = "";
+		for (Map.Entry<SourcePosition, List<Policy>> entry : conflicts.entrySet()) {
+			SourcePosition pos = entry.getKey();
+			List<Policy> contestants = entry.getValue();
+			conflictLog += "Conflict site: " + pos + "\n";
+			conflictLog += "Prevailing policy: " + contestants.get(0) + "\n";
+			conflictLog += "Overriden policies:" + contestants.subList(1, contestants.size()) + "\n";
+		}
+
+		if (conflictLog.length() > 0) {
+			System.out.println(conflictLog);
+		}
 
 		// save modified source bundle to disk
 

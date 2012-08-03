@@ -91,7 +91,7 @@ public class TreatmentFactory {
 
 		definitions.add(def);
 
-		return new Treatment(BASE_OBJECT_NAME + "." + funcName);
+		return new Treatment(count, policy);
 
 	}
 
@@ -145,11 +145,22 @@ public class TreatmentFactory {
 	}
 
 	public class Treatment {
-		// regex String to match within the suspect site
-		private final String newFuncName;
+		private final String treatmentFuncName;
+		private final int index;
+		private final Policy policy; // the policy this treatment based on
 
-		protected Treatment(String newFuncName) {
-			this.newFuncName = newFuncName;
+		protected Treatment(int index, Policy policy) {
+			this.index = index;
+			this.treatmentFuncName = BASE_OBJECT_NAME + ".t" + index;
+			this.policy = policy;
+		}
+
+		public int getIndex() {
+			return index;
+		}
+
+		public Policy getPolicy() {
+			return policy;
 		}
 
 		public String apply(String str, SuspectType suspectType, boolean isStatic) {
@@ -177,7 +188,37 @@ public class TreatmentFactory {
 				argFunc += ", ";
 			}
 
-			return newFuncName + "(" + argStatic + argContext + argFunc + oldArgs + ")";
+			return treatmentFuncName + "(" + argStatic + argContext + argFunc + oldArgs + ")";
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + index;
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Treatment other = (Treatment) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (index != other.index)
+				return false;
+			return true;
+		}
+
+		private TreatmentFactory getOuterType() {
+			return TreatmentFactory.this;
+		}
+
 	}
 }

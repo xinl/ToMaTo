@@ -55,8 +55,14 @@ public class PolicyAction {
 	}
 
 	public enum ActionType {
-		PROHIBIT("prohibit"),
-		CUSTOM("custom");
+		/*
+		 * ActionTypes are ordered by priority, from low to high. Because
+		 * applying multiple policies to one source bundle may result in
+		 * multiple policies want to modify one same suspect site. This priority
+		 * order will determine which policy's action shall prevail.
+		 */
+		CUSTOM("custom"),
+		PROHIBIT("prohibit");
 
 		private final String string;
 

@@ -2,11 +2,13 @@ package edu.upenn.cis.tomato.core;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -45,12 +47,18 @@ public class PolicyEnforcer {
 	 *
 	 * @param sourceBundle
 	 *            SourceBundle to be enforced upon.
+	 * @return A Map representing a log of conflicts result in multiple policy
+	 *         wants to modify a same suspect site. The Map's keys are the
+	 *         contested SourcePositions. The Map's values are lists of the
+	 *         contesting policies. The first policy in the list is the winner.
 	 */
-	public void enforceOn(SourceBundle sourceBundle) {
-		SortedSet<Operation> operations = getAllOperations(sourceBundle);
+	public Map<SourcePosition, List<Policy>> enforceOn(SourceBundle sourceBundle) {
+		Map<SourcePosition, List<Policy>> conflicts = new HashMap<SourcePosition, List<Policy>>();
+
+		SortedSet<Operation> operations = getAllOperations(sourceBundle, conflicts);
 
 		if (operations.size() == 0) {
-			return;
+			return conflicts;
 		}
 
 		// organize operations into a tree based on their nesting relationship
@@ -61,29 +69,32 @@ public class PolicyEnforcer {
 
 		// add the definition JS file to the beginning of web page
 		sourceBundle.addTreatmentDefinitions(treatmentFactory.BASE_OBJECT_NAME + ".js", treatmentFactory.getDefinitions());
+
+		return conflicts;
 	}
 
 	/**
-	 * Compile a flat list of Operations applicable to the given SourceBundle.
-	 * The list is ordered by position.
+	 * Compile a flat collection of Operations applicable to the given
+	 * SourceBundle. The list is ordered by position.
 	 *
 	 * @param sourceBundle
 	 *            A SourceBundle the Operations will be applied to.
-	 * @return A flat list of Operations customized to the given SourceBundle.
+	 * @param conflicts
+	 *            The conflict resolution log to write to, in the case when two
+	 *            policies want to operate on a same suspect site.
+	 * @return A flat sorted collection of Operations customized to the given
+	 *         SourceBundle.
 	 */
-	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle) {
-		// use set to avoid multiple treatments on same site
-		SortedSet<Operation> operations = new TreeSet<Operation>(SORT_BY_POSITION);
-
-		// fill in operations set
+	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle, Map<SourcePosition, List<Policy>> conflicts) {
+		Map<SourcePosition, Operation> operations = new HashMap<SourcePosition, Operation>();
 
 		StaticAnalyzer sa = new StaticAnalyzer(sourceBundle);
 
 		for (Map.Entry<Policy, Treatment> entry : policiesAndTreatments.entrySet()) {
-			Policy p = entry.getKey();
-			Treatment t = entry.getValue();
-			Set<Set<PolicyTerm>> staticTerms = p.getStaticTermGroups();
-			Set<Set<PolicyTerm>> dynamicTerms = p.getDynamicTermGroups();
+			Policy policy = entry.getKey();
+			Treatment treatment = entry.getValue();
+			Set<Set<PolicyTerm>> staticTerms = policy.getStaticTermGroups();
+			Set<Set<PolicyTerm>> dynamicTerms = policy.getDynamicTermGroups();
 
 			// prepare suspect lists
 			SuspectList staticSuspects = filterSuspectList(sa.getAllSuspects(), staticTerms);
@@ -93,13 +104,57 @@ public class PolicyEnforcer {
 			// add to the operation list
 			// clone a new SourcePosition to prevent contaminating suspects when we modify offsets later
 			for (Suspect s : staticSuspects) {
-				operations.add(new Operation(cloneSourcePosition(s.getPosition()), s.getType(), true, t));
+				Operation op = new Operation(cloneSourcePosition(s.getPosition()), s.getType(), true, treatment);
+				addOperationTo(operations, op, conflicts);
 			}
 			for (Suspect s : dynamicSuspects) {
-				operations.add(new Operation(cloneSourcePosition(s.getPosition()), s.getType(), false, t));
+				Operation op = new Operation(cloneSourcePosition(s.getPosition()), s.getType(), true, treatment);
+				addOperationTo(operations, op, conflicts);
 			}
 		}
-		return operations;
+
+		// now there won't be multiple treatments on same site in operations map any more
+		SortedSet<Operation> sortedOperations = new TreeSet<Operation>(SORT_BY_POSITION);
+		sortedOperations.addAll(operations.values());
+		return sortedOperations;
+	}
+
+	private void addOperationTo(Map<SourcePosition, Operation> ops, Operation op, Map<SourcePosition, List<Policy>> conflicts) {
+		/*
+		 * In case of multiple treatment competing for one source position, the
+		 * following code will ensure the one with highest priority prevails.
+		 *
+		 * Priority is determined as follows: Policy whose ActionType has higher
+		 * priority prevails; if two Policy's have the same ActionType, the one
+		 * comes later on the policy list prevails.
+		 */
+		SourcePosition opPos = op.getPosition();
+		if (ops.containsKey(opPos)) {
+
+			Operation existingOp = ops.get(opPos);
+			int existingOpPriority = existingOp.getTreatment().getPolicy().getAction().getType().ordinal();
+			int newOpPriority = op.getTreatment().getPolicy().getAction().getType().ordinal();
+			if (newOpPriority >= existingOpPriority) {
+				ops.put(opPos, op);
+			}
+
+			// log conflict resolution
+			if (conflicts.containsKey(opPos)) {
+				if (newOpPriority >= existingOpPriority) {
+					conflicts.get(opPos).add(0, op.getTreatment().getPolicy()); // add to beginning
+				} else {
+					conflicts.get(opPos).add(op.getTreatment().getPolicy()); // add to end
+				}
+			} else {
+				List<Policy> list = new ArrayList<Policy>();
+				list.add(existingOp.getTreatment().getPolicy());
+				list.add(op.getTreatment().getPolicy());
+				conflicts.put(opPos, list);
+			}
+
+		} else {
+			ops.put(op.getPosition(), op);
+		}
 	}
 
 	private SourcePosition cloneSourcePosition(SourcePosition pos) {
@@ -259,11 +314,6 @@ public class PolicyEnforcer {
 	 *
 	 * An Operation can have children Operations, which represents nested
 	 * relationship of the target segments.
-	 *
-	 * The equality of two Operations depends only on the position field. When
-	 * combined with SortedSet, this can prevent a same position be operated
-	 * upon twice.
-	 *
 	 */
 	public static class Operation {
 		protected SourcePosition pos;
@@ -317,7 +367,10 @@ public class PolicyEnforcer {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + (isStatic ? 1231 : 1237);
 			result = prime * result + ((pos == null) ? 0 : pos.hashCode());
+			result = prime * result + ((suspectType == null) ? 0 : suspectType.hashCode());
+			result = prime * result + ((treatment == null) ? 0 : treatment.hashCode());
 			return result;
 		}
 
@@ -330,10 +383,19 @@ public class PolicyEnforcer {
 			if (getClass() != obj.getClass())
 				return false;
 			Operation other = (Operation) obj;
+			if (isStatic != other.isStatic)
+				return false;
 			if (pos == null) {
 				if (other.pos != null)
 					return false;
 			} else if (!pos.equals(other.pos))
+				return false;
+			if (suspectType != other.suspectType)
+				return false;
+			if (treatment == null) {
+				if (other.treatment != null)
+					return false;
+			} else if (!treatment.equals(other.treatment))
 				return false;
 			return true;
 		}

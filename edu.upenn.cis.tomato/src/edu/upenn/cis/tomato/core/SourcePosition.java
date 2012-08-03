@@ -3,7 +3,7 @@ package edu.upenn.cis.tomato.core;
 import java.net.URL;
 
 public class SourcePosition {
-	private URL url;
+	private final URL url;
 	private int startOffset;
 	private int endOffset;
 
