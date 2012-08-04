@@ -145,4 +145,14 @@ public class SuspectList implements Set<Suspect> {
 		return true;
 	}
 
+	@Override
+	public SuspectList clone() {
+		SuspectList sl = new SuspectList();
+		Iterator<Suspect> iter = this.suspects.iterator();
+		while (iter.hasNext()) {
+			Suspect s = iter.next();
+			sl.add(s.clone());
+		}
+		return sl;
+	}
 }

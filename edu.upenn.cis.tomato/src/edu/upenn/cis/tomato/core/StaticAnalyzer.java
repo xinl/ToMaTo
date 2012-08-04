@@ -90,23 +90,13 @@ public class StaticAnalyzer {
 
 	public SuspectList getAllSuspects() {
 
-		boolean DEBUG = false;
-
 		if (sl == null) {
 			initializeAnalysis();
 			sl = new SuspectList();
 			sl.addAll(this.fia.getAllSuspects(this.cg, this.pa));
-			if (DEBUG) {
-				DebugUtil.printSeparationLine();
-				System.out.println("===== Function Invocation Suspect List =====\n");
-				Iterator<Suspect> iter_sl = sl.iterator();
-				while (iter_sl.hasNext()) {
-					Suspect fis = iter_sl.next();
-					System.out.println(fis);
-				}
-			}
 		}
-		return sl;
+
+		return sl.clone();
 	}
 
 	public void initializeAnalysis() {
