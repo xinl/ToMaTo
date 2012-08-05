@@ -2,7 +2,7 @@ package edu.upenn.cis.tomato.core;
 
 import java.net.URL;
 
-public class SourcePosition implements Cloneable{
+public class SourcePosition {
 	private final URL url;
 	private int startOffset;
 	private int endOffset;
@@ -74,10 +74,5 @@ public class SourcePosition implements Cloneable{
 		} else if (!url.equals(other.url))
 			return false;
 		return true;
-	}
-
-	@Override
-	public SourcePosition clone() {
-		return new SourcePosition(this.url, this.startOffset, this.endOffset);
 	}
 }

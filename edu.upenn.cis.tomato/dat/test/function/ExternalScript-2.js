@@ -10,7 +10,7 @@ function substraction(f, g)
 function innerAlert2() 
 {
  	var z = 2;
- 	var o =new Object();
+ 	var o = new Object();
  	o.func = eval;
  	o.func();
  	

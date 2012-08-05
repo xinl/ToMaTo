@@ -1,15 +1,12 @@
 <html>
 <head>
+
+<script language="javascript" type="text/javascript" src="./ExternalScript-1.js"></script>
+<script language="javascript" type="text/javascript" src="./ExternalScript-2.js"></script>
 <script language="javascript" type="text/javascript">
 function alert(x) {
 	var y = x;
 }
-</script>
-<script language="javascript" type="text/javascript" src="./ExternalScript-1.js"></script>
-<script language="javascript" type="text/javascript" src="./ExternalScript-2.js"></script>
-<script language="javascript" type="text/javascript">
-innerAlert1();
-innerAlert2();
 
 function Test()
 {
@@ -18,11 +15,13 @@ function Test()
 	this.p2 = "some value"; 
 }
 
+innerAlert1();
+innerAlert2();
 Test();
-
 </script>
 </head>
+
 <body>
-<p>This is a test page.</p>
+<p>ToMaTo Test Page: Function Invocation Suspects</p>
 </body>
 </html>

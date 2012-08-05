@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 
 import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
 
-public class Suspect implements Cloneable{
+public class Suspect {
 	/*
 	 * sitePos is presumed to be unique for every possible violation. Therefore
 	 * it is used as sole field to compare Suspects' equality.
@@ -118,16 +118,5 @@ public class Suspect implements Cloneable{
 		public String toString() {
 			return string;
 		}
-	}
-
-	@Override
-	public Suspect clone() {
-		Suspect s = new Suspect(this.sitePos.clone(), this.type);
-		Iterator<Entry<PropertyName, Object>> iter = this.attributes.entrySet().iterator();
-		while (iter.hasNext()) {
-			Entry<PropertyName, Object> e = iter.next();
-			s.attributes.put(e.getKey(), e.getValue());
-		}
-		return s;
 	}
 }

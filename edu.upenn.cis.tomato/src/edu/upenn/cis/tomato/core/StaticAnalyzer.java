@@ -96,7 +96,7 @@ public class StaticAnalyzer {
 			sl.addAll(this.fia.getAllSuspects(this.cg, this.pa));
 		}
 
-		return sl.clone();
+		return new SuspectList(sl);
 	}
 
 	public void initializeAnalysis() {
