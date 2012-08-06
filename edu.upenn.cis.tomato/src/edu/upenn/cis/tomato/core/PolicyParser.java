@@ -194,7 +194,7 @@ public class PolicyParser {
 			return Integer.valueOf(integerMatcher.group());
 		} else if (stringMatcher.lookingAt()) {
 			cursor = stringMatcher.end();
-			return stringMatcher.group(1); // without surrounding quotes
+			return stringMatcher.group(1).replace("\\\"", "\""); // without surrounding quotes and unescape quotes
 		} else if (booleanMatcher.lookingAt()) {
 			cursor = booleanMatcher.end();
 			return Boolean.valueOf(booleanMatcher.group());

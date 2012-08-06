@@ -137,7 +137,7 @@ public class PolicyTerm {
 	public String toString() {
 		String valueString = "";
 		if (value instanceof String) {
-			valueString = "\"" + value + "\"";
+			valueString = "\"" + value.toString().replace("\"", "\\\"") + "\""; // escape quotes and surround by quotes
 		} else {
 			valueString = value.toString();
 		}
