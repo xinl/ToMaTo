@@ -1,7 +1,9 @@
 package edu.upenn.cis.tomato.core;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Matcher;
@@ -25,7 +27,8 @@ import edu.upenn.cis.tomato.core.Suspect.SuspectType;
  * <negation> := <atom> | "!" <negation>
  * <atom> := "(" <disjunction> ")" | <term>
  *
- * <term> := <name> <comparator> <value> | <name> <string comparator> "(" <string> ")"
+ * <term> := <name> { "(" <arguments> ")" } <comparator> <value> | <name> { "(" <arguments> ")" } <string comparator> "(" <string> ")"
+ * <arguments> := <value> { "," <arguments> }
  * <comparator> := "==" | "!=" | ">" | "<" | ">=" | "<="
  * <string comparator> := ".matches" | ".notMaches"
  * <value> := <float> | <integer> | <string> | <boolean> | <suspect type>
@@ -126,6 +129,16 @@ public class PolicyParser {
 	protected void parseTerm() throws ParseException {
 		PolicyTerm term = null;
 		PropertyName name = PropertyName.fromString(parseName());
+		List<Object> args = null;
+		if (peekToken(TokenType.LEFT_PAREN)) {
+			skipToken(TokenType.LEFT_PAREN);
+			args = parseArgs();
+			if (peekToken(TokenType.RIGHT_PAREN)) {
+				skipToken(TokenType.RIGHT_PAREN);
+			} else {
+				error("Unclosed parenthesis.");
+			}
+		}
 		ComparatorType comp = parseComparator();
 		Object value = null;
 		if (comp == ComparatorType.MATCHES || comp == ComparatorType.NOT_MATCHES) {
@@ -144,9 +157,23 @@ public class PolicyParser {
 		} else {
 			value = parseValue();
 		}
-		term = new PolicyTerm(name, comp, value);
+		term = new PolicyTerm(name, args, comp, value);
 		PolicyNode node = new PolicyNode(PolicyNode.NodeType.TERM, term);
 		stack.push(node);
+	}
+
+	protected List<Object> parseArgs() throws ParseException {
+		List<Object> args = new ArrayList<Object>();
+		skipWhiteSpace();
+		args.add(parseValue());// there should be at least one argument
+		skipWhiteSpace();
+		while (peekToken(TokenType.ARG_SEPARATOR)) {
+			skipToken(TokenType.ARG_SEPARATOR);
+			skipWhiteSpace();
+			args.add(parseValue());
+			skipWhiteSpace();
+		}
+		return args;
 	}
 
 	protected ComparatorType parseComparator() throws ParseException {
@@ -320,7 +347,7 @@ public class PolicyParser {
 		AND("&"),
 		OR("\\|"),
 		NOT("!"),
-		NAME("[a-zA-Z_][\\w]*"),
+		NAME("[a-zA-Z_][\\w]*"), // start with a letter or underline, followed by numbers, letters, underlines
 		COMPARATOR("(?:[!><=]=)|[<>]|(?:\\.matches)|(?:\\.notMatches)"),
 		STRING("\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\""), // allow escaping using Friedl's: "unrolling-the-loop" technique
 		INTEGER("-?\\d+"),
@@ -329,7 +356,8 @@ public class PolicyParser {
 		SUSPECT_TYPE(buildSuspectTypeRegex()),
 		LEFT_PAREN("\\("),
 		RIGHT_PAREN("\\)"),
-		WHITESPACE("\\s+");
+		WHITESPACE("\\s+"),
+		ARG_SEPARATOR(",");
 
 		private final Pattern pattern;
 

@@ -1,5 +1,7 @@
 package edu.upenn.cis.tomato.core;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -14,15 +16,21 @@ import java.util.regex.Pattern;
  */
 public class PolicyTerm {
 	protected PropertyName propertyName;
+	protected List<Object> propertyArgs;
 	protected ComparatorType comparator;
 	protected Object value;
 
-	public PolicyTerm(String propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
+	public PolicyTerm(String propertyName, ComparatorType comparator, Object value) {
 		this(PropertyName.fromString(propertyName), comparator, value);
 	}
 
-	public PolicyTerm(PropertyName propertyName, ComparatorType comparator, Object value) throws IllegalArgumentException {
+	public PolicyTerm(PropertyName propertyName, ComparatorType comparator, Object value) {
+		this(propertyName, null, comparator, value);
+	}
+
+	public PolicyTerm(PropertyName propertyName, List<Object> propertyArgs, ComparatorType comparator, Object value) {
 		this.propertyName = propertyName;
+		this.propertyArgs = propertyArgs;
 		this.comparator = comparator;
 		this.value = value;
 	}
@@ -50,6 +58,10 @@ public class PolicyTerm {
 
 	public PropertyName getPropertyName() {
 		return propertyName;
+	}
+
+	public List<Object> getPropertyArgs() {
+		return new ArrayList<Object>(propertyArgs);
 	}
 
 	public ComparatorType getComparator() {
@@ -249,7 +261,9 @@ public class PolicyTerm {
 		CALLEE_END_OFFSET("CalleeEndOffset", true),
 		IS_CONSTRUCTOR("IsConstructor", true),
 		// dynamic properties
-		TIMES_INVOKED("TimesInvoked", false);
+		TIMES_INVOKED("TimesInvoked", false),
+		EVAL_BEFORE("EvalBefore", false),
+		EVAL_AFTER("EvalAfter", false);
 
 		private String string;
 		private boolean isStatic;
