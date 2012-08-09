@@ -27,25 +27,30 @@ public class TreatmentFactory {
 		// build definition
 		count++;
 		String funcName = "t" + count;
-		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (_static, _context, _func)";
+		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (_ToMaTo)";
 		Set<String> staticVars = new HashSet<String>();
 		Set<String> epilog = new HashSet<String>();
 
 		// recreate original arguments array
-		String args = "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);";
+		String args = "arguments = Array.prototype.slice.apply(arguments, [1, arguments.length]);";
 
 		// build condition
 		// TODO: a solution to name conflicts on _cond, etc will be referring to them as arguments[x] but it'll make code harder to read
-		String cond = "var _cond = _static";
+		String cond = "var _cond = _ToMaTo.isStatic";
 		Set<Set<PolicyTerm>> dynamicTermGroups = policy.getDynamicTermGroups();
 		for (Set<PolicyTerm> group : dynamicTermGroups) {
 			cond += " || (";
 			for (PolicyTerm term : group) {
 				if (!term.isStatic()) { // all static terms are true and omitted
-					if (term.getPropertyName() == PropertyName.TIMES_INVOKED) {
-						cond += "this." + funcName + ".TimesInvoked" + getComparatorValueJSString(term) + " &&";
+					switch(term.getPropertyName()) {
+					case TIMES_INVOKED:
+						cond += "this." + funcName + ".TimesInvoked " + getComparatorValueJSString(term) + " &&";
 						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimesInvoked = 0;");
 						epilog.add("this." + funcName + ".TimesInvoked++;");
+						break;
+					case EVAL_BEFORE:
+						cond += "_ToMaTo.evalBefore[\"" + term.getPropertyArgs().get(0) + "\"] " + getComparatorValueJSString(term)+ " &&";
+						break;
 					}
 				}
 			}
@@ -62,7 +67,7 @@ public class TreatmentFactory {
 		String ifClause = "if (_cond) ";
 		switch (policy.getAction().getType()) {
 		case PROHIBIT:
-			ifClause += "{ ; } else { _retVar = _func.apply(_context, arguments); }";
+			ifClause += "{ ; } else { _retVar = _ToMaTo.oldFunc.apply(_ToMaTo.oldThis, arguments); }";
 			break;
 		case CUSTOM:
 			ifClause += policy.getAction().getContent();
@@ -180,15 +185,44 @@ public class TreatmentFactory {
 			String oldFuncName = matcher.group(1);
 			String oldArgs = matcher.group(2);
 
-			String argStatic = (isStatic ? "true" : "false") + ", ";
+			String argStatic = (isStatic ? "true" : "false");
 			int dotIndex = oldFuncName.lastIndexOf(".");
-			String argContext = (dotIndex >= 0 ? oldFuncName.substring(0, dotIndex) : "null") + ", ";
+			String argThis = (dotIndex >= 0 ? oldFuncName.substring(0, dotIndex) : "null");
 			String argFunc = oldFuncName;
-			if (oldArgs.length() != 0) {
-				argFunc += ", ";
-			}
+			String evalBefore = buildEvalBeforeString();
 
-			return treatmentFuncName + "(" + argStatic + argContext + argFunc + oldArgs + ")";
+
+			// assemble the new text to be put at this suspect site
+			String newText = treatmentFuncName + "(";
+			newText += "{isStatic: " + argStatic + ", oldThis: " + argThis + ", oldFunc" + argFunc;
+			if (evalBefore.length() > 0) {
+				newText += ", evalBefore: " + evalBefore;
+			}
+			newText += "}";
+			if (oldArgs.length() > 0) {
+				newText += ", " + oldArgs;
+			}
+			newText += ")";
+			return newText;
+		}
+
+		private String buildEvalBeforeString() {
+			String evalBefore = "";
+			Set<Set<PolicyTerm>> dynamicTermGroups = policy.getDynamicTermGroups();
+			for (Set<PolicyTerm> group : dynamicTermGroups) {
+				for (PolicyTerm term : group) {
+					if (term.propertyName == PropertyName.EVAL_BEFORE) {
+						String evalStr = (String) term.getPropertyArgs().get(0);
+						evalBefore += "\"" + evalStr + "\": " + evalStr + ", ";
+					}
+				}
+			}
+			if (evalBefore.length() > 0) {
+				// trim one excessive ", " at the end
+				evalBefore = evalBefore.substring(0, evalBefore.length() - ", ".length());
+				evalBefore = "{" + evalBefore + "}";
+			}
+			return evalBefore;
 		}
 
 		@Override
