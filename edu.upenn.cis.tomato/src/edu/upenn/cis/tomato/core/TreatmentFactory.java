@@ -194,7 +194,7 @@ public class TreatmentFactory {
 
 			// assemble the new text to be put at this suspect site
 			String newText = treatmentFuncName + "(";
-			newText += "{isStatic: " + argStatic + ", oldThis: " + argThis + ", oldFunc" + argFunc;
+			newText += "{isStatic: " + argStatic + ", oldThis: " + argThis + ", oldFunc: " + argFunc;
 			if (evalBefore.length() > 0) {
 				newText += ", evalBefore: " + evalBefore;
 			}
