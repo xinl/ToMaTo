@@ -31,11 +31,11 @@ public class TreatmentFactoryTest {
 		assertTrue(bon.length() == 23);
 
 		String expected = "function " + bon + "(){}";
-		expected += bon + ".t1 = function (_static, _context, _func) { " + "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);"
-				+ "var _cond = _static || (this.t1.TimesInvoked > 3);" + "var _retVar = null;" + "if (_cond) {;} else { _retVar = _func.apply(_context, arguments);}" + "if (!_static) {this.t1.TimesInvoked++;}"
+		expected += bon + ".t1 = function (_ToMaTo) { " + "arguments = Array.prototype.slice.apply(arguments, [1, arguments.length]);"
+				+ "var _cond = _ToMaTo.isStatic || (this.t1.TimesInvoked > 3);" + "var _retVar = null;" + "if (_cond) {;} else { _retVar = _ToMaTo.oldFunc.apply(_ToMaTo.oldThis, arguments);}" + "if (!_ToMaTo.isStatic) {this.t1.TimesInvoked++;}"
 				+ "return _retVar;" + "};" + bon + ".t1.TimesInvoked = 0;";
-		expected += bon + ".t2 = function (_static, _context, _func) { " + "arguments = Array.prototype.slice.apply(arguments, [3, arguments.length]);"
-				+ "var _cond = _static;" + "var _retVar = null;" + "if (_cond) { _retVal = 2001; } else { alert(123); } " + "return _retVar;" + "};";
+		expected += bon + ".t2 = function (_ToMaTo) { " + "arguments = Array.prototype.slice.apply(arguments, [1, arguments.length]);"
+				+ "var _cond = _ToMaTo.isStatic;" + "var _retVar = null;" + "if (_cond) { _retVal = 2001; } else { alert(123); } " + "return _retVar;" + "};";
 
 		assertEquals(removeSpace(expected), removeSpace(tf.getDefinitions()));
 		//System.out.println(tf.getDefinitions());
@@ -50,8 +50,8 @@ public class TreatmentFactoryTest {
 		Treatment t2 = tf.makeTreatment(p2);
 		String result1 = t1.apply("foo.bar(a, b, c)", SuspectType.FUNCTION_INVOCATION, true);
 		String result2 = t2.apply("alert()", SuspectType.FUNCTION_INVOCATION, false);
-		String expected1 = tf.BASE_OBJECT_NAME + ".t1(true, foo, foo.bar, a, b, c)";
-		String expected2 = tf.BASE_OBJECT_NAME + ".t2(false, null, alert)";
+		String expected1 = tf.BASE_OBJECT_NAME + ".t1({isStatic: true, oldThis: foo, oldFunc: foo.bar}, a, b, c)";
+		String expected2 = tf.BASE_OBJECT_NAME + ".t2({isStatic: false, oldThis: null, oldFunc: alert})";
 		assertEquals(removeSpace(expected1), removeSpace(result1));
 		assertEquals(removeSpace(expected2), removeSpace(result2));
 	}

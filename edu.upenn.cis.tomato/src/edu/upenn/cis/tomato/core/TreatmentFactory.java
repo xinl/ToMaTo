@@ -81,7 +81,7 @@ public class TreatmentFactory {
 		def += "\t" + retVar + "\n";
 		def += "\t" + ifClause + "\n";
 		if (epilog.size() > 0) {
-			def += "\t" + "if (!_static) {\n";
+			def += "\t" + "if (!_ToMaTo.isStatic) {\n";
 			for (String s : epilog) {
 				def += "\t\t" + s + "\n";
 			}
