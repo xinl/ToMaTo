@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -86,11 +87,11 @@ public class PolicyEnforcerTest {
 		policies.add(new Policy("SiteURL.matches(\".*-1\\.js$\") & (SiteStartOffset >= 90 | TimesInvoked >= 3): prohibit"));
 		PE pe = new PE(policies);
 
-		File file = new File(new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/function/BasicFunctionInvocation.html");
+		File file = new File(new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/core/function/BasicFunctionInvocation.html");
 		SourceBundle sb = new SourceBundle(file.toURI());
 
-		SortedSet<Operation> ops = pe.getAllOperations(sb);
-		//System.out.println(ops);
+		SortedSet<Operation> ops = pe.getAllOperations(sb, null);
+		// System.out.println(ops);
 		assertEquals(3, ops.size());
 		for (Operation op : ops) {
 			assertTrue(op.getPosition().getURLString().endsWith("-1.js"));
@@ -121,9 +122,9 @@ public class PolicyEnforcerTest {
 				new SourcePosition(new URL("http://e.com/a.js"), 11, 13),
 				new SourcePosition(new URL("http://e.com/b.js"), 1, 4),
 				new SourcePosition(new URL("http://e.com/b.js"), 5, 10), };
-		SortedSet<Operation> ops = new TreeSet<Operation>(PolicyEnforcer.SORT_BY_POSITION);
+		SortedSet<Operation> ops = new TreeSet<Operation>(PolicyEnforcer.SORT_BY_POSITION_AND_SUSPECT_TYPE);
 		for (SourcePosition sp : sps) {
-			ops.add(new Operation(sp, null, false, null));
+			ops.add(new Operation(sp, SuspectType.FUNCTION_INVOCATION, false, null));
 		}
 
 		PE pe = new PE(new ArrayList<Policy>());
@@ -137,7 +138,7 @@ public class PolicyEnforcerTest {
 		// prepare expected tree
 		List<Operation> opse = new ArrayList<Operation>();
 		for (SourcePosition sp : sps) {
-			opse.add(new Operation(sp, null, false, null));
+			opse.add(new Operation(sp, SuspectType.FUNCTION_INVOCATION, false, null));
 		}
 
 		Operation[] opa = new Operation[0];
@@ -146,7 +147,7 @@ public class PolicyEnforcerTest {
 		opa[4].addChild(opa[1]);
 		opa[4].addChild(opa[2]);
 		opa[4].addChild(opa[3]);
-		SortedSet<Operation> expected = new TreeSet<Operation>(PolicyEnforcer.SORT_BY_POSITION);
+		SortedSet<Operation> expected = new TreeSet<Operation>(PolicyEnforcer.SORT_BY_POSITION_AND_SUSPECT_TYPE);
 		expected.add(opa[4]);
 		expected.add(opa[5]);
 		expected.add(opa[6]);
@@ -167,7 +168,7 @@ public class PolicyEnforcerTest {
 
 		PolicyEnforcer pe = new PolicyEnforcer(policies);
 
-		File file = new File(new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/function/BasicFunctionInvocation.html");
+		File file = new File(new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/core/function/BasicFunctionInvocation.html");
 		SourceBundle sb = new SourceBundle(file.toURI());
 		pe.enforceOn(sb);
 		//sb.saveSourceBundleTo(".");
@@ -179,9 +180,9 @@ public class PolicyEnforcerTest {
 			}
 			if (uri.toString().endsWith("-1.js")) {
 				String content = sb.getSourceContent(uri);
-				assertTrue(content.contains(".t1(true, null, alert, z)"));
-				assertTrue(content.contains(".t1(true, null, alert, \"some words\")"));
-				assertTrue(content.contains(".t1(true, null, addition, 1, 2)"));
+				assertTrue(content.contains(".t1({isStatic: true, oldThis: null, oldFunc: alert}, z)"));
+				assertTrue(content.contains(".t1({isStatic: true, oldThis: null, oldFunc: alert}, \"some words\")"));
+				assertTrue(content.contains(".t1({isStatic: true, oldThis: null, oldFunc: addition}, 1, 2)"));
 			}
 			if (uri.toString().endsWith(".html")) {
 				String content = sb.getSourceContent(uri);
@@ -202,8 +203,8 @@ public class PolicyEnforcerTest {
 		}
 
 		@Override
-		protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle) {
-			return super.getAllOperations(sourceBundle);
+		protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle, Map<OperationKey, List<Policy>> conflicts) {
+			return super.getAllOperations(sourceBundle, conflicts);
 		}
 
 		@Override
@@ -216,7 +217,7 @@ public class PolicyEnforcerTest {
 			return super.filterSuspectList(baseList, termGroups);
 		}
 
-		protected class SortByPosition extends PolicyEnforcer.SortByPosition {
+		protected class SortByPosition extends PolicyEnforcer.SortByPositionAndSuspectType {
 
 		}
 

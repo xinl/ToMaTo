@@ -26,7 +26,7 @@ import edu.upenn.cis.tomato.core.TreatmentFactory.Treatment;
  *
  */
 public class PolicyEnforcer {
-	public static final Comparator<Operation> SORT_BY_POSITION = new SortByPosition();
+	public static final Comparator<Operation> SORT_BY_POSITION_AND_SUSPECT_TYPE = new SortByPositionAndSuspectType();
 
 	protected Map<Policy, Treatment> policiesAndTreatments = new HashMap<Policy, Treatment>();
 	protected TreatmentFactory treatmentFactory = new TreatmentFactory();
@@ -52,8 +52,8 @@ public class PolicyEnforcer {
 	 *         contested SourcePositions. The Map's values are lists of the
 	 *         contesting policies. The first policy in the list is the winner.
 	 */
-	public Map<SourcePosition, List<Policy>> enforceOn(SourceBundle sourceBundle) {
-		Map<SourcePosition, List<Policy>> conflicts = new HashMap<SourcePosition, List<Policy>>();
+	public Map<OperationKey, List<Policy>> enforceOn(SourceBundle sourceBundle) {
+		Map<OperationKey, List<Policy>> conflicts = new HashMap<OperationKey, List<Policy>>();
 
 		SortedSet<Operation> operations = getAllOperations(sourceBundle, conflicts);
 
@@ -85,8 +85,8 @@ public class PolicyEnforcer {
 	 * @return A flat sorted collection of Operations customized to the given
 	 *         SourceBundle.
 	 */
-	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle, Map<SourcePosition, List<Policy>> conflicts) {
-		Map<SourcePosition, Operation> operations = new HashMap<SourcePosition, Operation>();
+	protected SortedSet<Operation> getAllOperations(SourceBundle sourceBundle, Map<OperationKey, List<Policy>> conflicts) {
+		Map<OperationKey, Operation> operations = new HashMap<OperationKey, Operation>();
 
 		StaticAnalyzer sa = new StaticAnalyzer(sourceBundle);
 
@@ -108,18 +108,18 @@ public class PolicyEnforcer {
 				addOperationTo(operations, op, conflicts);
 			}
 			for (Suspect s : dynamicSuspects) {
-				Operation op = new Operation(cloneSourcePosition(s.getPosition()), s.getType(), true, treatment);
+				Operation op = new Operation(cloneSourcePosition(s.getPosition()), s.getType(), false, treatment);
 				addOperationTo(operations, op, conflicts);
 			}
 		}
 
 		// now there won't be multiple treatments on same site in operations map any more
-		SortedSet<Operation> sortedOperations = new TreeSet<Operation>(SORT_BY_POSITION);
+		SortedSet<Operation> sortedOperations = new TreeSet<Operation>(SORT_BY_POSITION_AND_SUSPECT_TYPE);
 		sortedOperations.addAll(operations.values());
 		return sortedOperations;
 	}
 
-	private void addOperationTo(Map<SourcePosition, Operation> ops, Operation op, Map<SourcePosition, List<Policy>> conflicts) {
+	private void addOperationTo(Map<OperationKey, Operation> ops, Operation op, Map<OperationKey, List<Policy>> conflicts) {
 		/*
 		 * In case of multiple treatment competing for one source position, the
 		 * following code will ensure the one with highest priority prevails.
@@ -128,32 +128,34 @@ public class PolicyEnforcer {
 		 * priority prevails; if two Policy's have the same ActionType, the one
 		 * comes later on the policy list prevails.
 		 */
-		SourcePosition opPos = op.getPosition();
-		if (ops.containsKey(opPos)) {
+		OperationKey opKey = op.getOperationKey();
+		if (ops.containsKey(opKey)) {
 
-			Operation existingOp = ops.get(opPos);
+			Operation existingOp = ops.get(opKey);
 			int existingOpPriority = existingOp.getTreatment().getPolicy().getAction().getType().ordinal();
 			int newOpPriority = op.getTreatment().getPolicy().getAction().getType().ordinal();
 			if (newOpPriority >= existingOpPriority) {
-				ops.put(opPos, op);
+				ops.put(opKey, op);
 			}
 
 			// log conflict resolution
-			if (conflicts.containsKey(opPos)) {
-				if (newOpPriority >= existingOpPriority) {
-					conflicts.get(opPos).add(0, op.getTreatment().getPolicy()); // add to beginning
+			if (conflicts != null) {
+				if (conflicts.containsKey(opKey)) {
+					if (newOpPriority >= existingOpPriority) {
+						conflicts.get(opKey).add(0, op.getTreatment().getPolicy()); // add to beginning
+					} else {
+						conflicts.get(opKey).add(op.getTreatment().getPolicy()); // add to end
+					}
 				} else {
-					conflicts.get(opPos).add(op.getTreatment().getPolicy()); // add to end
+					List<Policy> list = new ArrayList<Policy>();
+					list.add(existingOp.getTreatment().getPolicy());
+					list.add(op.getTreatment().getPolicy());
+					conflicts.put(opKey, list);
 				}
-			} else {
-				List<Policy> list = new ArrayList<Policy>();
-				list.add(existingOp.getTreatment().getPolicy());
-				list.add(op.getTreatment().getPolicy());
-				conflicts.put(opPos, list);
 			}
 
 		} else {
-			ops.put(op.getPosition(), op);
+			ops.put(op.getOperationKey(), op);
 		}
 	}
 
@@ -172,7 +174,7 @@ public class PolicyEnforcer {
 	protected SortedSet<Operation> nestOperations(SortedSet<Operation> operations) {
 		Set<Operation> markedForRemoval = new HashSet<Operation>();
 		for (Operation op : operations) {
-			SortedSet<Operation> toBeNested = new TreeSet<Operation>(SORT_BY_POSITION);
+			SortedSet<Operation> toBeNested = new TreeSet<Operation>(SORT_BY_POSITION_AND_SUSPECT_TYPE);
 			if (toBeNested.contains(op)) {
 				continue;
 			}
@@ -323,6 +325,9 @@ public class PolicyEnforcer {
 		protected SortedSet<Operation> children;
 
 		public Operation(SourcePosition pos, SuspectType suspectType, boolean isStatic, Treatment treatment) {
+			if (pos == null || suspectType == null) {
+				throw new IllegalArgumentException("SourcePositon and/or SuspectType can't be null.");
+			}
 			this.pos = pos;
 			this.suspectType = suspectType;
 			this.isStatic = isStatic;
@@ -331,14 +336,14 @@ public class PolicyEnforcer {
 
 		public void addChild(Operation op) {
 			if (children == null) {
-				children = new TreeSet<Operation>(SORT_BY_POSITION);
+				children = new TreeSet<Operation>(SORT_BY_POSITION_AND_SUSPECT_TYPE);
 			}
 			children.add(op);
 		}
 
 		public void addChildren(Collection<Operation> ops) {
 			if (children == null) {
-				children = new TreeSet<Operation>(SORT_BY_POSITION);
+				children = new TreeSet<Operation>(SORT_BY_POSITION_AND_SUSPECT_TYPE);
 			}
 			children.addAll(ops);
 		}
@@ -361,6 +366,10 @@ public class PolicyEnforcer {
 
 		public Treatment getTreatment() {
 			return treatment;
+		}
+
+		public OperationKey getOperationKey() {
+			return new OperationKey(pos, suspectType);
 		}
 
 		@Override
@@ -418,7 +427,54 @@ public class PolicyEnforcer {
 		}
 	}
 
-	protected static class SortByPosition implements Comparator<Operation> {
+	public static class OperationKey {
+		protected SourcePosition pos;
+		protected SuspectType type;
+
+		public OperationKey(SourcePosition pos, SuspectType type) {
+			this.pos = pos;
+			this.type = type;
+		}
+
+		public SourcePosition getPos() {
+			return pos;
+		}
+
+		public SuspectType getType() {
+			return type;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((pos == null) ? 0 : pos.hashCode());
+			result = prime * result + ((type == null) ? 0 : type.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			OperationKey other = (OperationKey) obj;
+			if (pos == null) {
+				if (other.pos != null)
+					return false;
+			} else if (!pos.equals(other.pos))
+				return false;
+			if (type != other.type)
+				return false;
+			return true;
+		}
+
+	}
+
+	protected static class SortByPositionAndSuspectType implements Comparator<Operation> {
 
 		@Override
 		public int compare(Operation a, Operation b) {
@@ -435,6 +491,15 @@ public class PolicyEnforcer {
 			// Operations with larger end offset comes first, so that ones with larger offset range comes first
 			// this guarantee the nested child Operation will appear later than its parent.
 			result = bPos.getEndOffset() - aPos.getEndOffset();
+			if (result != 0) {
+				return result;
+			}
+			// if two operation has same position, then operation to DATA_WRITE comes before that to DATA_READ
+			// this is affected by the ordering in SuspectType enumeration.
+			if (a.getSuspectType() == null) {
+				System.out.println("A is NULL!" + a);
+			}
+			result = a.getSuspectType().ordinal() - b.getSuspectType().ordinal();
 			return result;
 		}
 

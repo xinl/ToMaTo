@@ -12,8 +12,8 @@ import java.util.Map;
 
 import edu.upenn.cis.tomato.core.Policy;
 import edu.upenn.cis.tomato.core.PolicyEnforcer;
+import edu.upenn.cis.tomato.core.PolicyEnforcer.OperationKey;
 import edu.upenn.cis.tomato.core.SourceBundle;
-import edu.upenn.cis.tomato.core.SourcePosition;
 
 public class CLIFrontEnd {
 
@@ -95,14 +95,14 @@ public class CLIFrontEnd {
 		// enforce policies on source bundle
 
 		PolicyEnforcer pe = new PolicyEnforcer(policies);
-		Map<SourcePosition, List<Policy>> conflicts = pe.enforceOn(src);
+		Map<OperationKey, List<Policy>> conflicts = pe.enforceOn(src);
 
 		// generate conflict log
 		String conflictLog = "";
-		for (Map.Entry<SourcePosition, List<Policy>> entry : conflicts.entrySet()) {
-			SourcePosition pos = entry.getKey();
+		for (Map.Entry<OperationKey, List<Policy>> entry : conflicts.entrySet()) {
+			OperationKey opKey = entry.getKey();
 			List<Policy> contestants = entry.getValue();
-			conflictLog += "Conflict site: " + pos + "\n";
+			conflictLog += "Conflict site: " + opKey.getPos() + " of suspect type:" + opKey.getType() + "\n";
 			conflictLog += "Prevailing policy: " + contestants.get(0) + "\n";
 			conflictLog += "Overriden policies:" + contestants.subList(1, contestants.size()) + "\n";
 		}

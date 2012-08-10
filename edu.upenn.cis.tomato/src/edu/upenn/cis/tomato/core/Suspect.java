@@ -9,10 +9,6 @@ import java.util.Map.Entry;
 import edu.upenn.cis.tomato.core.PolicyTerm.PropertyName;
 
 public class Suspect {
-	/*
-	 * sitePos is presumed to be unique for every possible violation. Therefore
-	 * it is used as sole field to compare Suspects' equality.
-	 */
 	protected SourcePosition sitePos; // We may want to remove this redundancy later
 	protected SuspectType type;
 	protected Map<PropertyName, Object> attributes = new HashMap<PropertyName, Object>();
@@ -90,6 +86,7 @@ public class Suspect {
 		if (getClass() != obj.getClass())
 			return false;
 		Suspect other = (Suspect) obj;
+		// sitePos + type uniquely tell two Suspect apart, other attributes are not considered
 		if (sitePos == null) {
 			if (other.sitePos != null)
 				return false;
@@ -101,7 +98,10 @@ public class Suspect {
 	}
 
 	public enum SuspectType {
-		FUNCTION_INVOCATION("FunctionInvocation");
+		FUNCTION_INVOCATION("FunctionInvocation"),
+		// the order of the following two type is significant, see SortByPositionAndSuspectType in PolicyEnforcer class
+		DATA_WRITE("DataWrite"),
+		DATA_READ("DataRead");
 
 		protected String string;
 
