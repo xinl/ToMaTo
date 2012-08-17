@@ -20,14 +20,16 @@ public class TreatmentFactory {
 	private int count = 0;
 
 	public TreatmentFactory() {
-		definitions.add("function " + BASE_OBJECT_NAME + "() {}");
+		String bootstrap = "function " + BASE_OBJECT_NAME + "() {}\n";
+		bootstrap += BASE_OBJECT_NAME + ".eval = eval;";
+		definitions.add(bootstrap);
 	}
 
 	public Treatment makeTreatment(Policy policy) {
 		// build definition
 		count++;
 		String funcName = "t" + count;
-		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function (_ToMaTo)";
+		String funcSignature = BASE_OBJECT_NAME + "." + funcName + " = function(_ToMaTo)";
 		Set<String> staticVars = new HashSet<String>();
 		Set<String> epilog = new HashSet<String>();
 
@@ -42,14 +44,17 @@ public class TreatmentFactory {
 			cond += " || (";
 			for (PolicyTerm term : group) {
 				if (!term.isStatic()) { // all static terms are true and omitted
-					switch(term.getPropertyName()) {
+					switch (term.getPropertyName()) {
 					case TIMES_INVOKED:
 						cond += "this." + funcName + ".TimesInvoked " + getComparatorValueJSString(term) + " &&";
 						staticVars.add(BASE_OBJECT_NAME + "." + funcName + ".TimesInvoked = 0;");
 						epilog.add("this." + funcName + ".TimesInvoked++;");
 						break;
 					case EVAL_BEFORE:
-						cond += "_ToMaTo.evalBefore[\"" + term.getPropertyArgs().get(0) + "\"] " + getComparatorValueJSString(term)+ " &&";
+						cond += "_ToMaTo.evalBefore[\"" + term.getPropertyArgs().get(0) + "\"] " + getComparatorValueJSString(term) + " &&";
+						break;
+					case EVAL_AT:
+						cond += BASE_OBJECT_NAME + ".eval(\"" + term.getPropertyArgs().get(0) + "\"" + " &&";
 						break;
 					}
 				}
@@ -191,7 +196,6 @@ public class TreatmentFactory {
 			String argFunc = oldFuncName;
 			String evalBefore = buildEvalBeforeString();
 
-
 			// assemble the new text to be put at this suspect site
 			String newText = treatmentFuncName + "(";
 			newText += "{isStatic: " + argStatic + ", oldThis: " + argThis + ", oldFunc: " + argFunc;
@@ -213,7 +217,7 @@ public class TreatmentFactory {
 				for (PolicyTerm term : group) {
 					if (term.propertyName == PropertyName.EVAL_BEFORE) {
 						String evalStr = (String) term.getPropertyArgs().get(0);
-						evalBefore += "\"" + evalStr + "\": " + evalStr + ", ";
+						evalBefore += "\"" + evalStr + "\": " + BASE_OBJECT_NAME + ".eval(\"" + evalStr + "\"), ";
 					}
 				}
 			}
