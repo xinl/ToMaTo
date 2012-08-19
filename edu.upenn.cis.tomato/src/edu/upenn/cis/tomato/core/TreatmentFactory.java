@@ -15,6 +15,12 @@ import edu.upenn.cis.tomato.core.Suspect.SuspectType;
 public class TreatmentFactory {
 	public final String BASE_OBJECT_NAME = makeBaseObjectName();
 	static private final Pattern FUNCTION_INVOCATION_PATTERN = Pattern.compile("^([^\\(]+)\\((.*)\\)$", Pattern.DOTALL);
+	// regex for x++, x--, ++x, --x;
+	// if matched, x can be retrieved from group 1, 2, 3, 4 respectively.
+	static private final Pattern UNARY_ASSIGNMENT_PATTERN = Pattern.compile("^(?:(.+)\\+\\+)|(?:(.+)--)|(?:\\+\\+(.+))|(?:--(.+))$", Pattern.DOTALL);
+	// regex for x += y, x -= y, etc.
+	// group 1: left side expression; group 2: self assignment operator (e.g. + in +=); group 3: right side expression
+	static private final Pattern ASSIGNMENT_PATTERN = Pattern.compile("^([^=]+?)([\\+\\-\\*/%]?)=(.*)$", Pattern.DOTALL);
 	private final List<String> definitions = new ArrayList<String>();
 
 	private int count = 0;
@@ -22,6 +28,7 @@ public class TreatmentFactory {
 	public TreatmentFactory() {
 		String bootstrap = "function " + BASE_OBJECT_NAME + "() {}\n";
 		bootstrap += BASE_OBJECT_NAME + ".eval = eval;";
+		bootstrap += BASE_OBJECT_NAME + ".ret = function(v) { return v; };";
 		definitions.add(bootstrap);
 	}
 
@@ -66,7 +73,7 @@ public class TreatmentFactory {
 		cond += ";";
 
 		// build return value
-		String retVar = "var _retVar = null;";
+		String retVar = "var _retVar = undefined;";
 
 		// build if clause
 		String ifClause = "if (_cond) ";
@@ -207,6 +214,98 @@ public class TreatmentFactory {
 				newText += ", " + oldArgs;
 			}
 			newText += ")";
+			return newText;
+		}
+
+		protected String applyToDataRead(String str, boolean isStatic) {
+			String argStatic = "isStatic: " + (isStatic ? "true" : "false");
+			String evalBefore = buildEvalBeforeString();
+			if (evalBefore.length() > 0) {
+				evalBefore = ", evalBefore: " + evalBefore;
+			}
+			String retFunc = BASE_OBJECT_NAME + ".ret";
+			String oldFunc = ", oldFunc: " + retFunc;
+
+			String newText = "";
+
+			Matcher matcher = UNARY_ASSIGNMENT_PATTERN.matcher(str);
+			if (matcher.matches()) {
+				// we've got something like x++
+				if (matcher.group(1) != null) {
+					// x++
+					String x = matcher.group(1);
+					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) + 1)";
+				} else if (matcher.group(2) != null) {
+					// x--
+					String x = matcher.group(2);
+					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) - 1)";
+				} else if (matcher.group(3) != null) {
+					// ++x
+					String x = matcher.group(3);
+					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) + 1)";
+				} else if (matcher.group(4) != null) {
+					// --x
+					String x = matcher.group(4);
+					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) - 1)";
+				}
+			} else {
+				// we've got simply a variable name
+				newText += treatmentFuncName + "({" + argStatic + oldFunc + "(" + str + ")" + evalBefore + "})";
+			}
+			return newText;
+		}
+
+		protected String applyToDataWrite(String str, boolean isStatic) {
+			String argStatic = "isStatic: " + (isStatic ? "true" : "false");
+			String evalBefore = buildEvalBeforeString();
+			if (evalBefore.length() > 0) {
+				evalBefore = ", evalBefore: " + evalBefore;
+			}
+			String retFunc = BASE_OBJECT_NAME + ".ret";
+			String oldFunc = ", oldFunc: " + retFunc;
+
+			String newText = "";
+
+			Matcher matcher = UNARY_ASSIGNMENT_PATTERN.matcher(str);
+			if (matcher.matches()) {
+				// we've got something like x++
+				if (matcher.group(1) != null) {
+					// x++
+					String x = matcher.group(1);
+					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " + 1)" + evalBefore + "}))";
+				} else if (matcher.group(2) != null) {
+					// x--
+					String x = matcher.group(2);
+					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " - 1)" + evalBefore + "}))";
+				} else if (matcher.group(3) != null) {
+					// ++x
+					String x = matcher.group(3);
+					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " + 1)" + evalBefore + "}))";
+				} else if (matcher.group(4) != null) {
+					// --x
+					String x = matcher.group(4);
+					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " - 1)" + evalBefore + "}))";
+				}
+			} else {
+				// we've got something like x = y or x += y
+				// Note: if the site has been treated of data read, the else clause in following code happens to be able to handle _xxx.ret(x, x = t(x) + 1) as well
+				matcher = ASSIGNMENT_PATTERN.matcher(str);
+				if (matcher.matches()) {
+					if (matcher.group(2) != null) {
+						String x = matcher.group(1);
+						String op = matcher.group(2);
+						String y = matcher.group(3);
+						newText += x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + op + y + ")" + evalBefore + "})";
+					} else {
+						String x = matcher.group(1);
+						String y = matcher.group(3);
+						newText += x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + y + ")" + evalBefore + "})";
+					}
+				} else {
+					System.err.println("No data write code found. Treatment aborted.");
+					return str;
+				}
+			}
 			return newText;
 		}
 
