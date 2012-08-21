@@ -230,27 +230,27 @@ public class TreatmentFactory {
 
 			Matcher matcher = UNARY_ASSIGNMENT_PATTERN.matcher(str);
 			if (matcher.matches()) {
-				// we've got something like x++
+				// we've got something like x++ or ++x
 				if (matcher.group(1) != null) {
-					// x++
+					// x++ will become ret(t(x), x = x + 1)
 					String x = matcher.group(1);
-					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) + 1)";
+					newText += retFunc + "(" + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + "), " + x + " = "  + x + " + 1)";
 				} else if (matcher.group(2) != null) {
 					// x--
 					String x = matcher.group(2);
-					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) - 1)";
+					newText += retFunc + "(" + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + "), " + x + " = "  + x + " - 1)";
 				} else if (matcher.group(3) != null) {
-					// ++x
+					// ++x will become t(x = x + 1)
 					String x = matcher.group(3);
-					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) + 1)";
+					newText += treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + " = " + x + " + 1)";
 				} else if (matcher.group(4) != null) {
 					// --x
 					String x = matcher.group(4);
-					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + ")" + evalBefore + "}) - 1)";
+					newText += treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + " = " + x + " - 1)";
 				}
 			} else {
-				// we've got simply a variable name
-				newText += treatmentFuncName + "({" + argStatic + oldFunc + "(" + str + ")" + evalBefore + "})";
+				// we've got simply a variable name, change it to t(x)
+				newText += treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + str + ")";
 			}
 			return newText;
 		}
@@ -268,23 +268,23 @@ public class TreatmentFactory {
 
 			Matcher matcher = UNARY_ASSIGNMENT_PATTERN.matcher(str);
 			if (matcher.matches()) {
-				// we've got something like x++
+				// we've got something like x++, ++x
 				if (matcher.group(1) != null) {
-					// x++
+					// x++ becomes ret(x, x = t(x + 1))
 					String x = matcher.group(1);
-					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " + 1)" + evalBefore + "}))";
+					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + " + 1" + "))";
 				} else if (matcher.group(2) != null) {
 					// x--
 					String x = matcher.group(2);
-					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " - 1)" + evalBefore + "}))";
+					newText += retFunc + "(" + x + ", " + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + " - 1" + "))";
 				} else if (matcher.group(3) != null) {
-					// ++x
+					// ++x becomes (x = t(x + 1))
 					String x = matcher.group(3);
-					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " + 1)" + evalBefore + "}))";
+					newText += "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + " + 1))";
 				} else if (matcher.group(4) != null) {
 					// --x
 					String x = matcher.group(4);
-					newText += retFunc + "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + " - 1)" + evalBefore + "}))";
+					newText += "(" + x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + " - 1))";
 				}
 			} else {
 				// we've got something like x = y or x += y
@@ -292,14 +292,16 @@ public class TreatmentFactory {
 				matcher = ASSIGNMENT_PATTERN.matcher(str);
 				if (matcher.matches()) {
 					if (matcher.group(2) != null) {
+						// something like x += y will become x = t(x + y)
 						String x = matcher.group(1);
 						String op = matcher.group(2);
 						String y = matcher.group(3);
-						newText += x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + x + op + y + ")" + evalBefore + "})";
+						newText += x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + x + op + y + ")";
 					} else {
+						// x = y will become x = t(y)
 						String x = matcher.group(1);
 						String y = matcher.group(3);
-						newText += x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + "(" + y + ")" + evalBefore + "})";
+						newText += x + " = " + treatmentFuncName + "({" + argStatic + oldFunc + evalBefore + "}, " + y + ")";
 					}
 				} else {
 					System.err.println("No data write code found. Treatment aborted.");
