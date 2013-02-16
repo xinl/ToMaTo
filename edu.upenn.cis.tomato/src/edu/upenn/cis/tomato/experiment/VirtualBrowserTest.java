@@ -29,6 +29,7 @@ public class VirtualBrowserTest {
 		System.out.println(((VBSandboxHandler)vb.webClientClone.getSandboxHandler()).getCollectedCommands());
 
 //		vb.webClientClone.getJavaScriptEngine().execute((HtmlPage) vb.webClientClone.getCurrentWindow().getEnclosedPage(), "x += 1; alert(x);", "sandbox", 0);
+
 		System.out.println("Cloned:");
 		System.out.println(vb.webClientClone.getAlertHandler());
 		System.out.println(((CollectingAlertHandler)vb.webClientClone.getAlertHandler()).getCollectedAlerts());

@@ -9,11 +9,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sourceforge.htmlunit.corejs.javascript.Context;
+import net.sourceforge.htmlunit.corejs.javascript.ContinuationPending;
+
 import com.gargoylesoftware.htmlunit.CollectingAlertHandler;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SandboxHandler;
 import com.gargoylesoftware.htmlunit.WebAssert;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 /**
  * A virtual web browser that support sandboxing.
@@ -29,6 +33,7 @@ public class VirtualBrowser implements Serializable {
 	public WebClient webClientClone;
 	public VBSandboxHandler sandboxHandler = new VBSandboxHandler();
 	public CollectingAlertHandler alertHandler = new CollectingAlertHandler();
+	public ContinuationPending contPending;
 
 	public VirtualBrowser(String url) {
 		webClient = new WebClient();
@@ -109,11 +114,22 @@ public class VirtualBrowser implements Serializable {
 		@Override
 		public void handleSandbox(final Page page, final String message) {
 			collectedCommands_.add(message);
-			try {
-				webClientClone = (WebClient) deepCopy(webClient);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+
+				Context context = Context.getCurrentContext();
+			    System.out.println("Context: "+ context);
+			    contPending = context.captureContinuation();
+
+				try {
+					webClientClone = (WebClient) deepCopy(webClient);
+					context = Context.getCurrentContext();
+					context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
+					context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
+					context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
 
 		}
 
