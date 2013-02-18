@@ -17,10 +17,12 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SandboxHandler;
 import com.gargoylesoftware.htmlunit.WebAssert;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 /**
  * A virtual web browser that support sandboxing.
+ *
  * @author Xin Li
  */
 public class VirtualBrowser implements Serializable {
@@ -82,7 +84,7 @@ public class VirtualBrowser implements Serializable {
 		 *
 		 */
 		private static final long serialVersionUID = 3629220363691553278L;
-		private final List<String> collectedCommands_;
+		private final List<String> collectedCommands;
 
 		/**
 		 * Creates a new instance, initializing it with an empty list.
@@ -99,7 +101,7 @@ public class VirtualBrowser implements Serializable {
 		 */
 		public VBSandboxHandler(final List<String> list) {
 			WebAssert.notNull("list", list);
-			collectedCommands_ = list;
+			collectedCommands = list;
 		}
 
 		/**
@@ -113,23 +115,36 @@ public class VirtualBrowser implements Serializable {
 		 */
 		@Override
 		public void handleSandbox(final Page page, final String message) {
-			collectedCommands_.add(message);
+			collectedCommands.add(message);
+
+			if (message.equals("fork")) {
 
 				Context context = Context.getCurrentContext();
-			    System.out.println("Context: "+ context);
-			    contPending = context.captureContinuation();
+				System.out.println("Context: " + context);
+				contPending = context.captureContinuation();
 
 				try {
 					webClientClone = (WebClient) deepCopy(webClient);
-					context = Context.getCurrentContext();
-					context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
-					context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
-					context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				}
+				System.out.println("clone: " + webClientClone);
+				webClientClone.getJavaScriptEngine().executeWithoutContinuation((HtmlPage) webClientClone.getCurrentWindow().getEnclosedPage(), "sandbox(\"resume\");", "sandbox_resume", 0);
+			} else if (message.equals("resume")) {
+				Context context = Context.getCurrentContext();
+				System.out.println("clone_resume: " + webClientClone);
+				try {
+					webClientClone = (WebClient) deepCopy(webClient);
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+
+				context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
+			}
 
 		}
 
@@ -140,7 +155,7 @@ public class VirtualBrowser implements Serializable {
 		 * @return a list of alert messages
 		 */
 		public List<String> getCollectedCommands() {
-			return collectedCommands_;
+			return collectedCommands;
 		}
 	}
 }

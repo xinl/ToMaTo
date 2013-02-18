@@ -3,7 +3,11 @@
 <script language="javascript" type="text/javascript">
 window.onload = function ()
 {
-	var x = 1; alert(x); window.sandbox("fork"); x += 1; alert(x);
+	var x = 1;
+	alert(x);
+	window.sandbox("fork");
+	// window.sandbox("resume");
+	x += 1; alert(x);
 }
 </script>
 </head>
