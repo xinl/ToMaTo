@@ -263,7 +263,8 @@ public class PolicyTerm {
 		// dynamic properties
 		TIMES_INVOKED("TimesInvoked", false),
 		EVAL_BEFORE("EvalBefore", false),
-		EVAL_AT("EvalAt", false);
+		EVAL_AT("EvalAt", false),
+		EVAL_AFTER("EvalAfter", false);
 
 		private String string;
 		private boolean isStatic;

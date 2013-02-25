@@ -31,8 +31,9 @@ public class VirtualBrowser implements Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = -5387486278240746013L;
-	public WebClient webClient;
-	public WebClient webClientClone;
+	public static WebClient webClient;
+	public static WebClient webClientClone;
+	public static boolean result;
 	public VBSandboxHandler sandboxHandler = new VBSandboxHandler();
 	public CollectingAlertHandler alertHandler = new CollectingAlertHandler();
 	public ContinuationPending contPending;
@@ -118,11 +119,8 @@ public class VirtualBrowser implements Serializable {
 			collectedCommands.add(message);
 
 			if (message.equals("fork")) {
-
 				Context context = Context.getCurrentContext();
-				System.out.println("Context: " + context);
 				contPending = context.captureContinuation();
-
 				try {
 					webClientClone = (WebClient) deepCopy(webClient);
 				} catch (IOException e) {
@@ -130,20 +128,18 @@ public class VirtualBrowser implements Serializable {
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				}
-				System.out.println("clone: " + webClientClone);
-				webClientClone.getJavaScriptEngine().executeWithoutContinuation((HtmlPage) webClientClone.getCurrentWindow().getEnclosedPage(), "sandbox(\"resume\");", "sandbox_resume", 0);
+				webClientClone.getJavaScriptEngine().executeWithoutContinuation((HtmlPage) webClientClone.getCurrentWindow().getEnclosedPage(), "window.isClone = true; sandbox(\"resume\");", "sandbox_resume", 0);
 			} else if (message.equals("resume")) {
 				Context context = Context.getCurrentContext();
-				System.out.println("clone_resume: " + webClientClone);
-				try {
-					webClientClone = (WebClient) deepCopy(webClient);
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-
 				context.resumeContinuation(contPending.getContinuation(), (Window) webClientClone.getCurrentWindow().getScriptObject(), null);
+			} else if (message.equals("setResultTrue")) {
+				result = true;
+				//TODO: halt JS execution here
+			} else if (message.equals("setResultFalse")) {
+				result = false;
+				//TODO: halt JS exectuion here
+			} else if (message.equals("getResult")) {
+				//TODO: return result to JS
 			}
 
 		}

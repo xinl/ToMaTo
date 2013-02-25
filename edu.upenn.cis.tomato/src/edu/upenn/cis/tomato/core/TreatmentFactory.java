@@ -29,6 +29,13 @@ public class TreatmentFactory {
 		String bootstrap = "function " + BASE_OBJECT_NAME + "() {}\n";
 		bootstrap += BASE_OBJECT_NAME + ".eval = eval;";
 		bootstrap += BASE_OBJECT_NAME + ".ret = function(v) { return v; };";
+		bootstrap += BASE_OBJECT_NAME + ".evalAfter = (typeof(window.sandbox) !== \"function\") "
+				+ "? function() {return false;} "
+				+ ": function(expr, func, context, args) {"
+				+ "sandbox(\"fork\");"
+				+ "if(window.isClone == true) { func.apply(context, args); if (eval(expr)) {sandbox(\"setResultTrue\");} else {sandbox(\"setResultFalse\")}}"
+				+ "else {return sandbox(\"getResult\");}"
+				+ "};";
 		definitions.add(bootstrap);
 	}
 
@@ -61,7 +68,10 @@ public class TreatmentFactory {
 						cond += "_ToMaTo.evalBefore[\"" + term.getPropertyArgs().get(0) + "\"] " + getComparatorValueJSString(term) + " &&";
 						break;
 					case EVAL_AT:
-						cond += BASE_OBJECT_NAME + ".eval(\"" + term.getPropertyArgs().get(0) + "\"" + " &&";
+						cond += BASE_OBJECT_NAME + ".eval(\"" + term.getPropertyArgs().get(0) + "\")" + " &&";
+						break;
+					case EVAL_AFTER:
+						cond += BASE_OBJECT_NAME + ".evalAfter(\"" + term.getPropertyArgs().get(0) + "\", _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments" + ")" + " &&";
 						break;
 					}
 				}
@@ -184,6 +194,10 @@ public class TreatmentFactory {
 			switch (suspectType) {
 			case FUNCTION_INVOCATION:
 				return applyToFunctionInvocation(str, isStatic);
+			case DATA_READ:
+				return applyToDataRead(str, isStatic);
+			case DATA_WRITE:
+				return applyToDataWrite(str, isStatic);
 			}
 			return null;
 		}
