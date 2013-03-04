@@ -139,7 +139,7 @@ public class VirtualBrowser implements Serializable {
 				result = false;
 				//TODO: halt JS exectuion here
 			} else if (message.equals("getResult")) {
-				//TODO: return result to JS
+				webClient.getJavaScriptEngine().executeWithoutContinuation((HtmlPage) webClient.getCurrentWindow().getEnclosedPage(), "window.sandboxResult = " + result, "sandbox_result", 0);
 			}
 
 		}

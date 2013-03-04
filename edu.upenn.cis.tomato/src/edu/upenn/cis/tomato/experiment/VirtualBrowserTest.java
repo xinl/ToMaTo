@@ -17,6 +17,21 @@ public class VirtualBrowserTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		//cloneTest();
+		treatTest();
+
+	}
+
+	private static void treatTest() {
+		String prefix = new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/sandbox/";
+		String htmlString = prefix + "eval.html";
+		URI htmlURI = new File(htmlString).toURI().normalize();
+		VirtualBrowser vb = new VirtualBrowser(htmlURI.toString());
+		System.out.println(((CollectingAlertHandler)vb.webClient.getAlertHandler()).getCollectedAlerts());
+		System.out.println(((VBSandboxHandler)vb.webClientClone.getSandboxHandler()).getCollectedCommands());
+	}
+
+	private static void cloneTest() {
 		String prefix = new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/basic/";
 		String htmlString = prefix + "Blank.html";
 		URI htmlURI = new File(htmlString).toURI().normalize();
@@ -34,7 +49,8 @@ public class VirtualBrowserTest {
 		System.out.println(vb.webClientClone.getAlertHandler());
 		System.out.println(((CollectingAlertHandler)vb.webClientClone.getAlertHandler()).getCollectedAlerts());
 		System.out.println(((VBSandboxHandler)vb.webClientClone.getSandboxHandler()).getCollectedCommands());
-
 	}
+
+
 
 }

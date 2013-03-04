@@ -26,7 +26,7 @@ public class TreatmentFactory {
 	private int count = 0;
 
 	public TreatmentFactory() {
-		String bootstrap = "function " + BASE_OBJECT_NAME + "() {}\n";
+		String bootstrap = "function " + BASE_OBJECT_NAME + "() {};\n";
 		bootstrap += BASE_OBJECT_NAME + ".eval = eval;";
 		bootstrap += BASE_OBJECT_NAME + ".ret = function(v) { return v; };";
 		bootstrap += BASE_OBJECT_NAME + ".evalAfter = (typeof(window.sandbox) !== \"function\") "
@@ -34,7 +34,7 @@ public class TreatmentFactory {
 				+ ": function(expr, func, context, args) {"
 				+ "sandbox(\"fork\");"
 				+ "if(window.isClone == true) { func.apply(context, args); if (eval(expr)) {sandbox(\"setResultTrue\");} else {sandbox(\"setResultFalse\")}}"
-				+ "else {return sandbox(\"getResult\");}"
+				+ "else {sandbox(\"getResult\"); return window.sandboxResult;}"
 				+ "};";
 		definitions.add(bootstrap);
 	}
@@ -71,7 +71,8 @@ public class TreatmentFactory {
 						cond += BASE_OBJECT_NAME + ".eval(\"" + term.getPropertyArgs().get(0) + "\")" + " &&";
 						break;
 					case EVAL_AFTER:
-						cond += BASE_OBJECT_NAME + ".evalAfter(\"" + term.getPropertyArgs().get(0) + "\", _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments" + ")" + " &&";
+						//TODO: term.getPropertyArgs().get(0) needs to be escaped.
+						cond += BASE_OBJECT_NAME + ".evalAfter(\"" + term.getPropertyArgs().get(0) + "\", _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments)" + " &&";
 						break;
 					}
 				}

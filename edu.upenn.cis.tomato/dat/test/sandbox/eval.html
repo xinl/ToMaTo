@@ -1,0 +1,46 @@
+<html>
+<head>
+<script language="javascript" type="text/javascript">
+function _TTO() {};
+_TTO.evalAfter = (typeof(window.sandbox) !== "function") 
+	? function() {return false;} 
+	: function(expr, func, context, args) {
+		sandbox("fork");
+		if(window.isClone == true) {
+			func.apply(context, args);
+			if (eval(expr)) {
+				sandbox("setResultTrue");
+			} else {
+				sandbox("setResultFalse")
+			}
+		} else {
+			sandbox("getResult");
+			return window.sandboxResult;
+		}
+	};
+
+_TTO.t1 = function(_ToMaTo) {
+	arguments = Array.prototype.slice.apply(arguments, [1, arguments.length]);
+	var _cond = _ToMaTo.isStatic || (_TTO.evalAfter("window.flag == true", _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments));
+	var _retVar = undefined;
+	if (_cond) {
+		;
+	} else {
+		_retVar = _ToMaTo.oldFunc.apply(_ToMaTo.oldThis, arguments);
+	}
+	return _retVar;
+};
+
+window.onload = function ()
+{
+	var x = 1;
+	_TTO.t1({isStatic: false, oldThis: null, oldFunc: eval}, "window.flag = true");
+	alert(window.flag);
+}
+</script>
+</head>
+<body>
+Aha!
+
+</body>
+</html>
