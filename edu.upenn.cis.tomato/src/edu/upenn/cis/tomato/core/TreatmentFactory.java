@@ -68,11 +68,10 @@ public class TreatmentFactory {
 						cond += "_ToMaTo.evalBefore[\"" + term.getPropertyArgs().get(0) + "\"] " + getComparatorValueJSString(term) + " &&";
 						break;
 					case EVAL_AT:
-						cond += BASE_OBJECT_NAME + ".eval(\"" + term.getPropertyArgs().get(0) + "\")" + " &&";
+						cond += BASE_OBJECT_NAME + ".eval('" + term.getPropertyArgs().get(0) + "')" + " &&";
 						break;
 					case EVAL_AFTER:
-						//TODO: term.getPropertyArgs().get(0) needs to be escaped.
-						cond += BASE_OBJECT_NAME + ".evalAfter(\"" + term.getPropertyArgs().get(0) + "\", _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments)" + " &&";
+						cond += BASE_OBJECT_NAME + ".evalAfter('" + term.getPropertyArgs().get(0) + "', _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments)" + " &&";
 						break;
 					}
 				}
