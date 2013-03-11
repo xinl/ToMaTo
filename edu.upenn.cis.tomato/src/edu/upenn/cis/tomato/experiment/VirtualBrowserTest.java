@@ -18,16 +18,27 @@ public class VirtualBrowserTest {
 	 */
 	public static void main(String[] args) {
 		//cloneTest();
-		treatTest();
-
+		//evalTest();
+		thisTest();
 	}
 
-	private static void treatTest() {
+	private static void evalTest() {
 		String prefix = new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/sandbox/";
 		String htmlString = prefix + "eval.html";
 		URI htmlURI = new File(htmlString).toURI().normalize();
 		VirtualBrowser vb = new VirtualBrowser(htmlURI.toString());
 		System.out.println(((CollectingAlertHandler)vb.webClient.getAlertHandler()).getCollectedAlerts());
+		System.out.println(((VBSandboxHandler)vb.webClientClone.getSandboxHandler()).getCollectedCommands());
+	}
+
+	private static void thisTest() {
+		String prefix = new File("").getAbsolutePath().replace("\\", "/") + "/dat/test/sandbox/";
+		String htmlString = prefix + "this.html";
+		URI htmlURI = new File(htmlString).toURI().normalize();
+		VirtualBrowser vb = new VirtualBrowser(htmlURI.toString());
+		System.out.println(((CollectingAlertHandler)vb.webClient.getAlertHandler()).getCollectedAlerts());
+		System.out.println(((VBSandboxHandler)vb.webClientClone.getSandboxHandler()).getCollectedCommands());
+		System.out.println(((CollectingAlertHandler)vb.webClientClone.getAlertHandler()).getCollectedAlerts());
 		System.out.println(((VBSandboxHandler)vb.webClientClone.getSandboxHandler()).getCollectedCommands());
 	}
 

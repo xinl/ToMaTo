@@ -1,0 +1,56 @@
+<html>
+<head>
+<script language="javascript" type="text/javascript">
+function _TTO() {};
+_TTO.evalAfter = (typeof(window.sandbox) !== "function") 
+	? function() {return false;} 
+	: function(expr, func, context, args) {
+		sandbox("fork");
+		if(window.isClone == true) {
+			func.apply(context, args);
+			alert(context);
+			alert(window.eval.call(context, "this.flag"));
+			if (eval.call(context, expr)) {
+
+				sandbox("setResultTrue");
+			} else {
+				sandbox("setResultFalse")
+			}
+		} else {
+			sandbox("getResult");
+			return window.sandboxResult;
+		}
+	};
+
+_TTO.t1 = function(_ToMaTo) {
+	// A treatment that don't allow setting obj.flag to true
+	arguments = Array.prototype.slice.apply(arguments, [1, arguments.length]);
+	var _cond = _ToMaTo.isStatic || (_TTO.evalAfter("this.flag == true", _ToMaTo.oldFunc, _ToMaTo.oldThis, arguments));
+	var _retVar = undefined;
+	if (_cond) {
+		;
+	} else {
+		_retVar = _ToMaTo.oldFunc.apply(_ToMaTo.oldThis, arguments);
+	}
+	return _retVar;
+};
+
+window.onload = function ()
+{
+	var f = function() {
+		this.flag = true;
+	}
+	var obj = function O() {};
+	obj.flag = false;
+	obj.setFlag = f;
+	// obj.setFlag() is replaced by the following line
+	_TTO.t1({isStatic: false, oldThis: obj, oldFunc: obj.setFlag});
+	alert(obj.flag);
+}
+</script>
+</head>
+<body>
+Aha!
+
+</body>
+</html>
