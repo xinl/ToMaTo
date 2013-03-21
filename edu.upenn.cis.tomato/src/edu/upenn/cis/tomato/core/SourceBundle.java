@@ -25,6 +25,7 @@ import net.htmlparser.jericho.OutputDocument;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 
+import com.ibm.wala.cast.ir.translator.TranslatorToCAst.Error;
 import com.ibm.wala.cast.js.html.DefaultSourceExtractor;
 import com.ibm.wala.cast.js.html.FileMapping;
 import com.ibm.wala.cast.js.html.IHtmlParser;
@@ -428,7 +429,13 @@ public class SourceBundle {
 			URL entryPointURL = absoluteURI.toURL();
 			InputStream inputStreamReader = getSourceInputStream(absoluteURI);
 			IGeneratorCallback htmlCallback = new HtmlCallBack(entryPointURL);
-			htmlParser.parse(entryPointURL, inputStreamReader, htmlCallback, entryPointURL.getFile());
+			try {
+				htmlParser.parse(entryPointURL, inputStreamReader, htmlCallback, entryPointURL.getFile());
+			} catch (Error e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
 
 			SourceRegion finalRegion = new SourceRegion();
 			htmlCallback.writeToFinalRegion(finalRegion);

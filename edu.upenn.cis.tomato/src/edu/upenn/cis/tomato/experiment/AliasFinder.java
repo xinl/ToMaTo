@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.Set;
 
 import com.ibm.wala.cast.ir.ssa.AstIRFactory;
+import com.ibm.wala.cast.ir.translator.TranslatorToCAst.Error;
 import com.ibm.wala.cast.js.html.FileMapping;
 import com.ibm.wala.cast.js.html.MappedSourceModule;
 import com.ibm.wala.cast.js.html.WebPageLoaderFactory;
@@ -28,36 +29,42 @@ public class AliasFinder {
 
     /**
      * @param args
-     * @throws CancelException 
-     * @throws IOException 
-     * @throws IllegalArgumentException 
+     * @throws CancelException
+     * @throws IOException
+     * @throws IllegalArgumentException
      */
     public static void main(String[] args) throws IllegalArgumentException, IOException, CancelException {
         edu.upenn.cis.tomato.util.Util.initializeSystemBuiltinVariables();
-        
+
         PolicyExample.Example_AliasAnalysis_Function();
-        
+
         URL url = new URL("file:///" + new File("").getAbsolutePath() + "/dat/test/alias/Alias_Function.html");
         System.out.println(url);
         String[] path = url.getFile().split("/");
         String mashupPageName = "L" + path[path.length - 1];
         System.out.println("File:" + mashupPageName);
-        
+
         JavaScriptLoader.addBootstrapFile(WebUtil.preamble);
-        Set<MappedSourceModule> scripts = WebUtil.extractScriptFromHTML(url);
+        Set<MappedSourceModule> scripts = null;
+		try {
+			scripts = WebUtil.extractScriptFromHTML(url);
+		} catch (Error e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         // building call graph
         JSCFABuilder builder = JSCallGraphBuilderUtil.makeCGBuilder(new WebPageLoaderFactory(
-                                                                            new CAstRhinoTranslatorFactory(), 
-                                                                            null), 
+                                                                            new CAstRhinoTranslatorFactory(),
+                                                                            null),
                                                                     scripts.toArray(new SourceModule[scripts.size()]),
-                                                                    CGBuilderType.ONE_CFA_PRECISE_LEXICAL, 
+                                                                    CGBuilderType.ONE_CFA_PRECISE_LEXICAL,
                                                                     AstIRFactory.makeDefaultFactory());
         //builder.setBaseURL(url);
         CallGraph cg = builder.makeCallGraph(builder.getOptions());
         PointerAnalysis pa = builder.getPointerAnalysis();
-        
+
         //new JsViewer(cg, pa);
-        
+
         AliasAnalysis.findVariableAlias(mashupPageName, cg, pa);
     }
 }
